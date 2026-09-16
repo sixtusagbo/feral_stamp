@@ -11,11 +11,11 @@ import 'date_wheel.dart';
 /// block. It is deliberately one widget: swapping in a different one
 /// mid-animation is what makes these transitions feel fake.
 ///
-/// It is a box seen from above. The *top face* (the wheels) lies in the same
-/// plane as the paper, so it takes the camera's tilt and foreshortens with it,
-/// hinged along its bottom edge. The *front face* (the body) is vertical and is
-/// drawn square to the viewer. Rotating the whole block turns it into a wedge;
-/// rotating none of it leaves a flat card. Only the face tilts.
+/// It is a cube seen from above and in front. The *top face* (the wheels)
+/// tips back and foreshortens, hinged along the edge it shares with the front.
+/// The *front face* (the body) is vertical, drawn square to the viewer, and
+/// tall enough to read as a solid. Rotating the whole block turns it into a
+/// wedge; rotating none of it leaves a flat card. Only the face tilts.
 class StampHead extends StatelessWidget {
   const StampHead({
     super.key,
@@ -47,14 +47,18 @@ class StampHead extends StatelessWidget {
   static const width = 272.0;
   static const _radius = 28.0;
 
-  /// The body's bottom corners. Large, so the silhouette turns under rather
-  /// than ending in a shoulder.
-  static const _heel = 44.0;
-  static const _bodyHeight = 64.0;
+  /// The body's bottom corners. Modest: the reference is a cube with softened
+  /// edges, and a large radius here turns it into a dish.
+  static const _heel = 22.0;
 
-  /// How far the rubber pad shows beneath the body.
-  static const _padReveal = 11.0;
-  static const _padInset = 16.0;
+  /// Tall. The front face of the cube is about as deep as the top face is
+  /// wide-to-height, which is most of what makes it read as a solid.
+  static const _bodyHeight = 94.0;
+
+  /// How far the rubber shows beneath the body: a thin strip, the cube's
+  /// bottom edge, not a base it sits on.
+  static const _padReveal = 10.0;
+  static const _padInset = 2.0;
 
   void _emit({int? day, int? month, int? year}) {
     final y = year ?? date.year;
@@ -171,9 +175,10 @@ class StampHead extends StatelessWidget {
     );
   }
 
-  /// The blank mass of the stamp. A horizontal highlight down the middle with
-  /// the sides falling off is what makes it read as round rather than as a
-  /// flat panel, and the heel darkens so the body visibly turns under.
+  /// The front face of the cube. A vertical gradient does most of the work:
+  /// a shaded crease along the top where it meets the tipped-back face, a lit
+  /// middle, and a gentle fall-off towards the base. A faint side vignette
+  /// keeps it from reading as a flat panel.
   Widget _body() {
     const radius = BorderRadius.vertical(bottom: Radius.circular(_heel));
     return Container(
@@ -184,10 +189,10 @@ class StampHead extends StatelessWidget {
         boxShadow: [
           // Contact shadow: tight and dark so the block rests on the paper.
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 26,
+            color: Colors.black.withValues(alpha: 0.26),
+            blurRadius: 24,
             spreadRadius: -8,
-            offset: const Offset(0, 22),
+            offset: const Offset(0, 20),
           ),
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.12),
@@ -202,28 +207,28 @@ class StampHead extends StatelessWidget {
         child: DecoratedBox(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFD9D9E0),
-                Color(0xFFF3F3F6),
+                Color(0xFFE3E3E8),
+                Color(0xFFF6F6F8),
                 Color(0xFFFFFFFF),
-                Color(0xFFFDFDFE),
-                Color(0xFFE8E8ED),
-                Color(0xFFD3D3DB),
+                Color(0xFFFBFBFC),
+                Color(0xFFEDEDF1),
               ],
-              stops: [0.0, 0.14, 0.40, 0.60, 0.86, 1.0],
+              stops: [0.0, 0.10, 0.42, 0.78, 1.0],
             ),
           ),
           child: const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
                 colors: [
+                  Color(0x14000000),
                   Color(0x00000000),
                   Color(0x00000000),
-                  Color(0x22000000),
+                  Color(0x12000000),
                 ],
-                stops: [0.0, 0.62, 1.0],
+                stops: [0.0, 0.12, 0.88, 1.0],
               ),
             ),
             child: SizedBox.expand(),
@@ -233,20 +238,20 @@ class StampHead extends StatelessWidget {
     );
   }
 
-  /// The rubber that meets the paper. Narrower than the body and sharing its
-  /// heel radius, so what shows is a thin dark band following the curve.
+  /// The rubber that meets the paper: a thin dark strip the width of the body,
+  /// sharing its corner radius, so it reads as the cube's bottom edge.
   Widget _pad() {
     return Container(
       width: width - _padInset * 2,
-      height: _bodyHeight * 0.6 + _padReveal,
+      height: _bodyHeight * 0.5 + _padReveal,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF3B3B46), Color(0xFF1B1B22), Color(0xFF0E0E13)],
-          stops: [0.0, 0.7, 1.0],
+          colors: [Color(0xFF2E2E37), Color(0xFF17171D), Color(0xFF0C0C10)],
+          stops: [0.0, 0.75, 1.0],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(_heel - 6)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(_heel - 1)),
       ),
     );
   }
