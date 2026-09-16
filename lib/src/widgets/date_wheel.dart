@@ -15,6 +15,9 @@ class DateWheel extends StatefulWidget {
     required this.onChanged,
     required this.axisLabel,
     this.width = 74,
+    this.rowHeight = 25,
+    this.fontSize = 21,
+    this.fade = Tone.card,
     this.enabled = true,
   });
 
@@ -23,11 +26,15 @@ class DateWheel extends StatefulWidget {
   final ValueChanged<int> onChanged;
   final String axisLabel;
   final double width;
+  final double rowHeight;
+  final double fontSize;
+
+  /// What the ends of the column fade into: the surface it sits on.
+  final Color fade;
   final bool enabled;
 
-  static const rowHeight = 25.0;
   static const visibleRows = 5;
-  static const viewportHeight = rowHeight * visibleRows;
+  double get viewportHeight => rowHeight * visibleRows;
 
   @override
   State<DateWheel> createState() => _DateWheelState();
@@ -65,13 +72,13 @@ class _DateWheelState extends State<DateWheel> {
       children: [
         SizedBox(
           width: widget.width,
-          height: DateWheel.viewportHeight,
+          height: widget.viewportHeight,
           child: Stack(
             children: [
               // The selection pill sits behind the numbers.
               Center(
                 child: Container(
-                  height: DateWheel.rowHeight - 2,
+                  height: widget.rowHeight - 2,
                   decoration: BoxDecoration(
                     color: Tone.wheelPill,
                     borderRadius: BorderRadius.circular(11),
@@ -80,7 +87,7 @@ class _DateWheelState extends State<DateWheel> {
               ),
               ListWheelScrollView.useDelegate(
                 controller: _controller,
-                itemExtent: DateWheel.rowHeight,
+                itemExtent: widget.rowHeight,
                 physics: widget.enabled
                     ? const FixedExtentScrollPhysics()
                     : const NeverScrollableScrollPhysics(),
@@ -105,12 +112,12 @@ class _DateWheelState extends State<DateWheel> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Tone.card,
-                          Tone.card.withValues(alpha: 0.55),
-                          Tone.card.withValues(alpha: 0),
-                          Tone.card.withValues(alpha: 0),
-                          Tone.card.withValues(alpha: 0.55),
-                          Tone.card,
+                          widget.fade,
+                          widget.fade.withValues(alpha: 0.55),
+                          widget.fade.withValues(alpha: 0),
+                          widget.fade.withValues(alpha: 0),
+                          widget.fade.withValues(alpha: 0.55),
+                          widget.fade,
                         ],
                         stops: const [0.0, 0.14, 0.30, 0.70, 0.86, 1.0],
                       ),
@@ -121,8 +128,11 @@ class _DateWheelState extends State<DateWheel> {
             ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(widget.axisLabel, style: Type.axis),
+        const SizedBox(height: 2),
+        Text(
+          widget.axisLabel,
+          style: Type.axis.copyWith(fontSize: 6.5, letterSpacing: 1.1),
+        ),
       ],
     );
   }

@@ -7,6 +7,7 @@ import 'invoice.dart';
 import 'theme.dart';
 import 'widgets/invoice_sheet.dart';
 import 'widgets/stamp_cube.dart';
+import 'widgets/stamp_face.dart';
 
 /// Where we are in the press. The whole animation is one timeline; this enum
 /// just names the regions so the UI can decide what to show.
@@ -50,8 +51,6 @@ class _StampPageState extends State<StampPage>
         if (s == AnimationStatus.completed) setState(() {});
       });
 
-  // Set by the wheels once they are back on the lid.
-  // ignore: prefer_final_fields
   DateTime _date = DateTime(2026, 9, 15);
   StampLabel _label = StampLabel.paid;
   Color _color = Tone.stamp;
@@ -303,6 +302,14 @@ class _StampPageState extends State<StampPage>
                     width: 224,
                     depth: 132,
                     height: 96,
+                    face: StampFace(
+                      date: _date,
+                      headText: _headLabel,
+                      color: _color,
+                      background: StampCube.lidTone(1 - t),
+                      interactive: _stage == Stage.picking,
+                      onDateChanged: (d) => setState(() => _date = d),
+                    ),
                   ),
                 ),
               ),

@@ -14,31 +14,26 @@ void main() {
     PointerDeviceKind.mouse,
     PointerDeviceKind.trackpad,
   ]) {
-    testWidgets(
-      'a $kind drag rolls the day wheel',
-      // The wheels are off the stamp while the box itself is being built.
-      skip: true,
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 1600);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
+    testWidgets('a $kind drag rolls the day wheel', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(const FeralStampApp());
-        expect(find.textContaining('15 September 2026'), findsOneWidget);
+      await tester.pumpWidget(const FeralStampApp());
+      expect(find.textContaining('15 September 2026'), findsOneWidget);
 
-        await tester.drag(
-          find.text('15').first,
-          const Offset(0, -60),
-          kind: kind,
-        );
-        await tester.pumpAndSettle();
+      await tester.drag(
+        find.text('15').first,
+        const Offset(0, -60),
+        kind: kind,
+      );
+      await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('15 September 2026'),
-          findsNothing,
-          reason: 'a $kind drag should have moved the day off 15',
-        );
-      },
-    );
+      expect(
+        find.textContaining('15 September 2026'),
+        findsNothing,
+        reason: 'a $kind drag should have moved the day off 15',
+      );
+    });
   }
 }
