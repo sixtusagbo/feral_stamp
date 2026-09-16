@@ -25,6 +25,7 @@ class StampCube extends StatelessWidget {
     this.height = 118,
     this.position = Offset.zero,
     this.lift = 0,
+    this.rest = 0,
     this.face,
   });
 
@@ -45,6 +46,11 @@ class StampCube extends StatelessWidget {
 
   /// How far the base is raised off the page along its normal.
   final double lift;
+
+  /// 1 while the box is still the flat picker card, 0 once it is on the page.
+  /// At rest it is a card: all four corners round, no wall, a soft lift rather
+  /// than a contact shadow. Those resolve into the box as this falls to 0.
+  final double rest;
 
   /// Content drawn on the top face. Null leaves it blank.
   final Widget? face;
@@ -81,13 +87,14 @@ class StampCube extends StatelessWidget {
             transform: _camera()..translateByDouble(0, 4, 0, 1),
             child: _contact(),
           ),
-          Transform(
-            alignment: Alignment.center,
-            transform: _camera()
-              ..translateByDouble(0, depth / 2, -height / 2, 1)
-              ..rotateX(math.pi / 2),
-            child: _front(),
-          ),
+          if (rest < 0.98)
+            Transform(
+              alignment: Alignment.center,
+              transform: _camera()
+                ..translateByDouble(0, depth / 2, -height / 2, 1)
+                ..rotateX(math.pi / 2),
+              child: _front(),
+            ),
           Transform(
             alignment: Alignment.center,
             transform: _camera()..translateByDouble(0, 0, -height, 1),
@@ -98,19 +105,30 @@ class StampCube extends StatelessWidget {
     );
   }
 
-  /// The lit top. Slightly darker at the back edge, and it carries the
-  /// rounded corners that read as the box's softened top edges.
+  /// The lid. At rest it is the whole card and rounds on every corner; on the
+  /// page its bottom edge is the crease into the front wall and squares off.
+  /// It also sits a shade lighter at rest, where nothing is casting on it.
   Widget _top() {
+    final bottom = Radius.circular(_topRadius * rest);
     return Container(
       width: width,
       height: depth,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(_topRadius)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(_topRadius),
+          topRight: const Radius.circular(_topRadius),
+          bottomLeft: bottom,
+          bottomRight: bottom,
+        ),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFEBEBEF), Color(0xFFF2F2F5), Color(0xFFF6F6F8)],
-          stops: [0.0, 0.6, 1.0],
+          colors: [
+            Color.lerp(const Color(0xFFEBEBEF), const Color(0xFFF4F4F6), rest)!,
+            Color.lerp(const Color(0xFFF2F2F5), const Color(0xFFFAFAFB), rest)!,
+            Color.lerp(const Color(0xFFF6F6F8), const Color(0xFFFDFDFD), rest)!,
+          ],
+          stops: const [0.0, 0.6, 1.0],
         ),
       ),
       child: face,
@@ -197,9 +215,14 @@ class StampCube extends StatelessWidget {
   /// shadow on the footprint rather than a gradient fill: a radial gradient
   /// reaches transparent at half the shortest side, which is inside the box's
   /// own outline, so nothing of it ever showed.
+  ///
+  /// At rest this is the card's only shadow, and it is a lift, not a drop:
+  /// light, wide, and pushed down a little. On the page it tightens and
+  /// darkens, then spreads and fades again as the box is raised.
   Widget _shadow() {
     final t = (lift / 120).clamp(0.0, 1.0);
-    final strength = 1 - t * 0.7;
+    final ground = 1 - rest;
+    final strength = (1 - t * 0.7) * (0.35 + 0.65 * ground);
     return Container(
       width: width,
       height: depth,
@@ -208,8 +231,9 @@ class StampCube extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.26 * strength),
-            blurRadius: 34 + t * 30,
-            spreadRadius: 14 + t * 16,
+            blurRadius: 34 + t * 30 + rest * 26,
+            spreadRadius: 14 + t * 16 - rest * 10,
+            offset: Offset(0, 20 * rest),
           ),
         ],
       ),
@@ -217,9 +241,11 @@ class StampCube extends StatelessWidget {
   }
 
   /// A tight dark shadow hugging the base, gone almost as soon as the box
-  /// leaves the page: the cue for the moment of contact.
+  /// leaves the page: the cue for the moment of contact. There is no page to
+  /// contact at rest, so it only exists once the camera has tilted.
   Widget _contact() {
     final t = (lift / 40).clamp(0.0, 1.0);
+    final ground = 1 - rest;
     return Container(
       width: width,
       height: depth,
@@ -227,7 +253,7 @@ class StampCube extends StatelessWidget {
         borderRadius: BorderRadius.circular(_heelRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.34 * (1 - t)),
+            color: Colors.black.withValues(alpha: 0.34 * (1 - t) * ground),
             blurRadius: 10,
             spreadRadius: 3,
           ),

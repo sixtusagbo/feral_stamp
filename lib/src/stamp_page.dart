@@ -248,7 +248,10 @@ class _StampPageState extends State<StampPage>
     final lift = hoverLift * t * settle;
 
     final exitOffset = Offset(0, -exit * 430);
-    final exitScale = 1 + 0.16 * exit;
+
+    // At rest the card is bigger than the box is on the page: the camera
+    // pulls back as the page comes into view. 1.45 measured off the reference.
+    final exitScale = (1 + 0.16 * exit) * lerpDouble(1.45, 1.0, t)!;
 
     return SizedBox(
       height: lerpDouble(268, 700, t)!,
@@ -291,6 +294,7 @@ class _StampPageState extends State<StampPage>
                     perspective: perspective,
                     position: position,
                     lift: lift,
+                    rest: 1 - t,
                     width: 224,
                     depth: 132,
                     height: 102,
