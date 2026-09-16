@@ -295,6 +295,7 @@ class _StampPageState extends State<StampPage>
                     color: _color,
                     interactive: _stage == Stage.picking,
                     solid: t > 0.04,
+                    faceTilt: camera3d,
                     onDateChanged: (d) => setState(() => _date = d),
                   ),
                 ),

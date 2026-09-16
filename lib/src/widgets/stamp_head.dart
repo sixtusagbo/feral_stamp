@@ -11,10 +11,11 @@ import 'date_wheel.dart';
 /// block. It is deliberately one widget: swapping in a different one
 /// mid-animation is what makes these transitions feel fake.
 ///
-/// The volume is carried by three things, none of which is a 3D transform: a
-/// cylindrical highlight across the body, a pad inset from the sides so the
-/// body appears to wrap over it, and a contact shadow. Rotating the block
-/// instead foreshortens it into a wedge.
+/// It is a box seen from above. The *top face* (the wheels) lies in the same
+/// plane as the paper, so it takes the camera's tilt and foreshortens with it,
+/// hinged along its bottom edge. The *front face* (the body) is vertical and is
+/// drawn square to the viewer. Rotating the whole block turns it into a wedge;
+/// rotating none of it leaves a flat card. Only the face tilts.
 class StampHead extends StatelessWidget {
   const StampHead({
     super.key,
@@ -24,6 +25,7 @@ class StampHead extends StatelessWidget {
     required this.onDateChanged,
     this.interactive = true,
     this.solid = false,
+    this.faceTilt,
   });
 
   final DateTime date;
@@ -38,6 +40,9 @@ class StampHead extends StatelessWidget {
 
   /// Grows the block into its pressing form: body, rubber pad, contact shadow.
   final bool solid;
+
+  /// The camera's rotation, applied to the top face only. Null means flat.
+  final Matrix4? faceTilt;
 
   static const width = 300.0;
   static const _radius = 30.0;
@@ -54,40 +59,69 @@ class StampHead extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final faceRadius = BorderRadius.vertical(
+      top: const Radius.circular(_radius),
+      bottom: Radius.circular(solid ? 0 : _radius),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: width,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_radius),
-            boxShadow: [
-              if (solid)
-                // Contact shadow: tight and dark near the pad, so the block
-                // reads as resting on the paper rather than floating over it.
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.30),
-                  blurRadius: 30,
-                  spreadRadius: -8,
-                  offset: const Offset(0, 22),
-                ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: solid ? 0.16 : 0.08),
-                blurRadius: solid ? 56 : 28,
-                spreadRadius: -6,
-                offset: Offset(0, solid ? 34 : 12),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(_radius),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [_face(), if (solid) _body()],
+        // Hinged along its bottom edge so it stays attached to the body as it
+        // tips back.
+        Transform(
+          alignment: Alignment.bottomCenter,
+          transform: faceTilt ?? Matrix4.identity(),
+          child: Container(
+            width: width,
+            decoration: BoxDecoration(
+              borderRadius: faceRadius,
+              boxShadow: [
+                if (!solid)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 28,
+                    spreadRadius: -6,
+                    offset: const Offset(0, 12),
+                  ),
+              ],
             ),
+            child: ClipRRect(borderRadius: faceRadius, child: _face()),
           ),
         ),
-        if (solid) _pad(),
+        if (solid) ...[
+          Container(
+            width: width,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(_radius + 6),
+              ),
+              boxShadow: [
+                // Contact shadow: tight and dark near the pad, so the block
+                // rests on the paper rather than floating over it.
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.30),
+                  blurRadius: 28,
+                  spreadRadius: -6,
+                  offset: const Offset(0, 20),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 60,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 36),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(_radius + 6),
+              ),
+              child: _body(),
+            ),
+          ),
+          _pad(),
+        ],
       ],
     );
   }
@@ -100,7 +134,7 @@ class StampHead extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFAFAFB), Tone.card],
+          colors: [Color(0xFFF1F1F4), Color(0xFFF7F7F9)],
         ),
       ),
       child: Column(
