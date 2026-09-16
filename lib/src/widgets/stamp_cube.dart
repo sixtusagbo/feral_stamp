@@ -50,8 +50,12 @@ class StampCube extends StatelessWidget {
   final Widget? face;
 
   static const _topRadius = 28.0;
-  static const _heelRadius = 22.0;
-  static const _edge = 13.0;
+
+  /// Big: the front wall turns under into the base rather than meeting it at
+  /// a corner, which is most of what makes the block read as a solid.
+  static const _heelRadius = 40.0;
+  static const _edge = 12.0;
+  static const _edgeInset = 5.0;
 
   Matrix4 _camera() => Matrix4.identity()
     ..setEntry(3, 2, perspective)
@@ -70,8 +74,13 @@ class StampCube extends StatelessWidget {
         children: [
           Transform(
             alignment: Alignment.center,
-            transform: _camera(),
+            transform: _camera()..translateByDouble(6, 14, 0, 1),
             child: _shadow(),
+          ),
+          Transform(
+            alignment: Alignment.center,
+            transform: _camera()..translateByDouble(0, 4, 0, 1),
+            child: _contact(),
           ),
           Transform(
             alignment: Alignment.center,
@@ -101,8 +110,8 @@ class StampCube extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFE6E6EB), Color(0xFFF2F2F5), Color(0xFFF7F7F9)],
-          stops: [0.0, 0.55, 1.0],
+          colors: [Color(0xFFEBEBEF), Color(0xFFF2F2F5), Color(0xFFF6F6F8)],
+          stops: [0.0, 0.6, 1.0],
         ),
       ),
       child: face,
@@ -125,14 +134,14 @@ class StampCube extends StatelessWidget {
                 borderRadius: radius,
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFFD6D6DD),
-                    Color(0xFFF0F0F4),
+                    Color(0xFFCFCFD7),
+                    Color(0xFFEDEDF2),
                     Color(0xFFFFFFFF),
-                    Color(0xFFFCFCFD),
-                    Color(0xFFEBEBF0),
-                    Color(0xFFD2D2DA),
+                    Color(0xFFFDFDFE),
+                    Color(0xFFE9E9EE),
+                    Color(0xFFCBCBD4),
                   ],
-                  stops: [0.0, 0.14, 0.40, 0.60, 0.86, 1.0],
+                  stops: [0.0, 0.16, 0.42, 0.58, 0.84, 1.0],
                 ),
               ),
               child: const DecoratedBox(
@@ -142,26 +151,26 @@ class StampCube extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color(0x66FFFFFF),
-                      Color(0x00FFFFFF),
+                      Color(0x24000000),
+                      Color(0x06000000),
                       Color(0x00000000),
-                      Color(0x16000000),
+                      Color(0x14000000),
                     ],
-                    stops: [0.0, 0.06, 0.70, 1.0],
+                    stops: [0.0, 0.16, 0.66, 1.0],
                   ),
                 ),
               ),
             ),
           ),
           Positioned(
-            left: 2,
-            right: 2,
+            left: _edgeInset,
+            right: _edgeInset,
             bottom: 0,
             height: _edge,
             child: const DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(_heelRadius - 2),
+                  bottom: Radius.circular(_heelRadius - _edgeInset),
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -176,24 +185,45 @@ class StampCube extends StatelessWidget {
     );
   }
 
-  /// Lies flat on the page. Softens and fades as the box lifts, which is the
-  /// cue that tells you how high it is.
+  /// Lies flat on the page, offset a little towards the viewer. A blurred
+  /// shadow on the footprint rather than a gradient fill: a radial gradient
+  /// reaches transparent at half the shortest side, which is inside the box's
+  /// own outline, so nothing of it ever showed.
   Widget _shadow() {
-    final t = (lift / 160).clamp(0.0, 1.0);
-    final spread = 1 + t * 0.5;
+    final t = (lift / 120).clamp(0.0, 1.0);
+    final strength = 1 - t * 0.7;
     return Container(
-      width: (width + 70) * spread,
-      height: (depth + 60) * spread,
+      width: width,
+      height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(60),
-        gradient: RadialGradient(
-          colors: [
-            Colors.black.withValues(alpha: 0.34 * (1 - t * 0.7)),
-            Colors.black.withValues(alpha: 0.10 * (1 - t * 0.7)),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.45, 1.0],
-        ),
+        borderRadius: BorderRadius.circular(_heelRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.26 * strength),
+            blurRadius: 34 + t * 30,
+            spreadRadius: 14 + t * 16,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A tight dark shadow hugging the base, gone almost as soon as the box
+  /// leaves the page: the cue for the moment of contact.
+  Widget _contact() {
+    final t = (lift / 40).clamp(0.0, 1.0);
+    return Container(
+      width: width,
+      height: depth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(_heelRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34 * (1 - t)),
+            blurRadius: 10,
+            spreadRadius: 3,
+          ),
+        ],
       ),
     );
   }
