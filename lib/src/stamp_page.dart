@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'invoice.dart';
 import 'theme.dart';
 import 'widgets/invoice_sheet.dart';
-import 'widgets/stamp_head.dart';
+import 'widgets/stamp_cube.dart';
 
 /// Where we are in the press. The whole animation is one timeline; this enum
 /// just names the regions so the UI can decide what to show.
@@ -50,6 +50,8 @@ class _StampPageState extends State<StampPage>
         if (s == AnimationStatus.completed) setState(() {});
       });
 
+  // Set by the wheels once they are back on the lid.
+  // ignore: prefer_final_fields
   DateTime _date = DateTime(2026, 9, 15);
   StampLabel _label = StampLabel.paid;
   Color _color = Tone.stamp;
@@ -220,44 +222,33 @@ class _StampPageState extends State<StampPage>
     // Tilt in, then back out again as the camera rises at the end.
     final t = _tilt.value;
     final camera = (t - _rise.value).clamp(0.0, 1.0);
-    final angle = camera * 0.66;
+    final angle = camera * 0.80;
+
+    // Perspective comes in with the tilt so the box sits flat and undistorted
+    // while it is still the picker.
+    final perspective = 0.0009 * t;
 
     final camera3d = Matrix4.identity()
-      ..setEntry(3, 2, 0.0016)
+      ..setEntry(3, 2, perspective)
       ..rotateX(-angle);
 
-    // The top face tips back harder than the page. In the reference it ends up
-    // at roughly 0.36 of its width in height, which is a ~50 degree tilt.
-    final faceTilt = Matrix4.identity()
-      ..setEntry(3, 2, 0.0014)
-      ..rotateX(-angle * 1.3);
-
-    // The rubber rebounds off the paper, then the head accelerates away.
+    // The rubber rebounds off the paper, then the box accelerates away.
     final bounce =
         Curves.easeOutCubic.transform((_lift.value * 3).clamp(0.0, 1.0)) *
         Beat.bounce;
     final settle = (1 - _press.value) + bounce;
     final exit = Curves.easeInCubic.transform(_lift.value);
 
-    // Only the page is in the tilted plane. The head stays square to the
-    // viewer and is simply positioned over the page, which is what the
-    // reference does: rotating it too foreshortens the block into a wedge that
-    // swallows the paper.
-    //
-    // Its resting spot is derived by pushing the mark's position on the page
-    // through the same camera, so the two stay aligned at any tilt angle.
-    const markOnPage = Offset(115, 176);
-    const padOffset = 150.0;
-    final markOnScreen = MatrixUtils.transformPoint(camera3d, markOnPage);
-    final rest = Offset(markOnScreen.dx, markOnScreen.dy - padOffset);
+    // The box is a real object on the page: it hovers above the mark along
+    // the page's normal and descends onto it. Leaving is a screen-space rise
+    // applied outside the camera, which is what the reference does.
+    const markOnPage = Offset(88, 150);
+    const hoverLift = 78.0;
+    final position = Offset.lerp(Offset.zero, markOnPage, t)!;
+    final lift = hoverLift * t * settle;
 
-    const hoverLift = 150.0;
-    final offset =
-        Offset.lerp(Offset.zero, rest, t)! -
-        Offset(0, hoverLift * t * settle) -
-        Offset(0, exit * 430);
-
-    final scale = (1 + 0.05 * t * settle) * (1 + 0.16 * exit);
+    final exitOffset = Offset(0, -exit * 430);
+    final exitScale = 1 + 0.16 * exit;
 
     return SizedBox(
       height: lerpDouble(268, 700, t)!,
@@ -292,17 +283,17 @@ class _StampPageState extends State<StampPage>
             child: Opacity(
               opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
               child: Transform.translate(
-                offset: offset,
+                offset: exitOffset,
                 child: Transform.scale(
-                  scale: scale,
-                  child: StampHead(
-                    date: _date,
-                    headText: _headLabel,
-                    color: _color,
-                    interactive: _stage == Stage.picking,
-                    solid: t > 0.04,
-                    faceTilt: faceTilt,
-                    onDateChanged: (d) => setState(() => _date = d),
+                  scale: exitScale,
+                  child: StampCube(
+                    angle: angle,
+                    perspective: perspective,
+                    position: position,
+                    lift: lift,
+                    width: 190,
+                    depth: 100,
+                    height: 105,
                   ),
                 ),
               ),
