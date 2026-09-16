@@ -12,6 +12,10 @@ import 'widgets/stamp_head.dart';
 /// just names the regions so the UI can decide what to show.
 enum Stage { picking, pressing, stamped }
 
+/// Identifies the perspective transform wrapping the paper, so tests can read
+/// the camera matrix instead of eyeballing a screenshot.
+const cameraKey = Key('stamp-camera');
+
 /// Timeline offsets, derived from the reference component's own control panel:
 /// camera tilt 0.80s, press 0.15s, lift away 0.42s, camera rise 0.70s.
 class _T {
@@ -45,6 +49,8 @@ class _StampPageState extends State<StampPage>
       )..addStatusListener((s) {
         if (s == AnimationStatus.completed) setState(() {});
       });
+
+  final _keys = FocusNode();
 
   DateTime _date = DateTime(2026, 9, 15);
   StampLabel _label = StampLabel.paid;
@@ -109,6 +115,7 @@ class _StampPageState extends State<StampPage>
 
   @override
   void dispose() {
+    _keys.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -118,7 +125,7 @@ class _StampPageState extends State<StampPage>
     return Scaffold(
       backgroundColor: Tone.page,
       body: KeyboardListener(
-        focusNode: FocusNode()..requestFocus(),
+        focusNode: _keys,
         autofocus: true,
         onKeyEvent: (e) {
           if (e is KeyDownEvent &&
@@ -136,7 +143,7 @@ class _StampPageState extends State<StampPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _header(),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
                     _scene(),
                     const SizedBox(height: 18),
                     _controls(),
@@ -229,7 +236,7 @@ class _StampPageState extends State<StampPage>
       ..rotateX(-angle);
 
     return SizedBox(
-      height: lerpDouble(212, 560, t)!,
+      height: lerpDouble(268, 600, t)!,
       width: 440,
       child: Stack(
         alignment: Alignment.center,
@@ -240,6 +247,7 @@ class _StampPageState extends State<StampPage>
               child: Opacity(
                 opacity: Curves.easeOut.transform(t.clamp(0.0, 1.0)),
                 child: Transform(
+                  key: cameraKey,
                   alignment: Alignment.center,
                   transform: camera3d,
                   child: InvoiceSheet(
