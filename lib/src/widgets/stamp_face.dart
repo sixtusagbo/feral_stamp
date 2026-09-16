@@ -31,8 +31,8 @@ class StampFace extends StatelessWidget {
   /// Wheels only scroll while the picker is on screen.
   final bool interactive;
 
-  static const _rowHeight = 18.0;
-  static const _fontSize = 14.0;
+  static const _rowHeight = 22.0;
+  static const _fontSize = 13.5;
 
   void _emit({int? day, int? month, int? year}) {
     final y = year ?? date.year;
@@ -70,7 +70,7 @@ class StampFace extends StatelessWidget {
                 values: Wheels.days,
                 index: date.day - 1,
                 axisLabel: 'DAY',
-                width: 50,
+                width: 54,
                 rowHeight: _rowHeight,
                 fontSize: _fontSize,
                 fade: background,
@@ -81,7 +81,7 @@ class StampFace extends StatelessWidget {
                 values: Wheels.months,
                 index: date.month - 1,
                 axisLabel: 'MONTH',
-                width: 60,
+                width: 66,
                 rowHeight: _rowHeight,
                 fontSize: _fontSize,
                 fade: background,
@@ -92,7 +92,7 @@ class StampFace extends StatelessWidget {
                 values: Wheels.years,
                 index: date.year - 2021,
                 axisLabel: 'YEAR',
-                width: 60,
+                width: 66,
                 rowHeight: _rowHeight,
                 fontSize: _fontSize,
                 fade: background,

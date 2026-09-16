@@ -7,9 +7,11 @@ import '../theme.dart';
 /// One scrollable column of the stamp's date roller.
 ///
 /// Five rows are visible. The centre row sits in a grey pill and is the
-/// selected value. The rows either side of it are crisp; the outermost pair
-/// are blurred and faded, which is what sells the column as a wheel rolling
-/// out of focus rather than a list being clipped.
+/// selected value. Each row blurs and fades by its own distance from the
+/// selection, continuously as the wheel turns, so the neighbours are crisp and
+/// the outermost pair roll out of focus. Blurring the rows rather than a band
+/// behind them keeps the effect attached to the values and leaves no visible
+/// region edges on the lid.
 class DateWheel extends StatefulWidget {
   const DateWheel({
     super.key,
@@ -68,6 +70,37 @@ class _DateWheelState extends State<DateWheel> {
     super.dispose();
   }
 
+  /// The neighbours of the selection sit a shade lighter than it; from about
+  /// one pitch out to two, rows blur and fade on top of that.
+  Widget _row(int i) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final offset = _controller.hasClients
+            ? _controller.offset
+            : widget.index * widget.rowHeight;
+        final distance = ((i * widget.rowHeight - offset) / widget.rowHeight)
+            .abs();
+        final k = ((distance - 1.15) / 0.85).clamp(0.0, 1.0);
+        final near = distance.clamp(0.0, 1.0);
+
+        Widget row = Center(
+          child: Text(
+            widget.values[i],
+            style: Type.wheel.copyWith(fontSize: widget.fontSize),
+          ),
+        );
+        if (k > 0.02) {
+          row = ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 2.6 * k, sigmaY: 2.6 * k),
+            child: row,
+          );
+        }
+        return Opacity(opacity: 1 - 0.2 * near - 0.45 * k, child: row);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -78,7 +111,6 @@ class _DateWheelState extends State<DateWheel> {
           height: widget.viewportHeight,
           child: Stack(
             children: [
-              // The selection pill sits behind the numbers.
               // The pill stands a little taller than a row, as in the
               // reference, so it reads as a slot the value sits in.
               Center(
@@ -97,37 +129,18 @@ class _DateWheelState extends State<DateWheel> {
                     ? const FixedExtentScrollPhysics()
                     : const NeverScrollableScrollPhysics(),
                 // Nearly flat: the neighbours of the selected row are full
-                // size and full strength in the reference.
+                // size in the reference.
                 diameterRatio: 3.0,
                 perspective: 0.001,
-                squeeze: 1.0,
                 overAndUnderCenterOpacity: 1.0,
                 onSelectedItemChanged: widget.onChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
                   childCount: widget.values.length,
-                  builder: (context, i) =>
-                      Center(child: Text(widget.values[i], style: Type.wheel)),
+                  builder: (context, i) => _row(i),
                 ),
               ),
-              // The outermost rows are out of focus.
-              for (final top in [true, false])
-                Positioned(
-                  top: top ? 0 : null,
-                  bottom: top ? null : 0,
-                  left: 0,
-                  right: 0,
-                  height: widget.rowHeight - 1,
-                  child: IgnorePointer(
-                    child: ClipRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-                  ),
-                ),
-              // Feather the ends so values roll out of view rather than
-              // stopping dead at the edge of the face.
+              // A thin feather at the very ends so the outermost rows roll
+              // off the face rather than stopping at its edge.
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -136,14 +149,12 @@ class _DateWheelState extends State<DateWheel> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.fade.withValues(alpha: 0.85),
-                          widget.fade.withValues(alpha: 0.45),
+                          widget.fade,
                           widget.fade.withValues(alpha: 0),
                           widget.fade.withValues(alpha: 0),
-                          widget.fade.withValues(alpha: 0.45),
-                          widget.fade.withValues(alpha: 0.85),
+                          widget.fade,
                         ],
-                        stops: const [0.0, 0.16, 0.26, 0.74, 0.84, 1.0],
+                        stops: const [0.0, 0.10, 0.90, 1.0],
                       ),
                     ),
                   ),

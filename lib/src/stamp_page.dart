@@ -62,6 +62,7 @@ class _StampPageState extends State<StampPage>
   bool _confirmed = false;
 
   late final StampSound _sound = widget.sound ?? StampSound();
+  bool _dinged = false;
   int _stamps = 0;
   bool _thudded = false;
 
@@ -108,15 +109,24 @@ class _StampPageState extends State<StampPage>
 
   void _stamp({bool voided = false}) {
     if (_stage != Stage.picking) return;
+    _sound.tick();
     setState(() {
       _voided = voided;
       _stamps++;
       _thudded = false;
+      _dinged = false;
     });
     _c.forward();
   }
 
+  /// Wraps a control's handler so it ticks first.
+  VoidCallback _tap(VoidCallback handler) => () {
+    _sound.tick();
+    handler();
+  };
+
   void _undo() {
+    _sound.tick();
     setState(() {
       _voided = false;
       _confirmed = false;
@@ -132,12 +142,18 @@ class _StampPageState extends State<StampPage>
     HardwareKeyboard.instance.addHandler(_onKey);
 
     // The thud fires when the rubber meets the paper, which is the end of the
-    // press phase, not the moment the button was pressed.
+    // press phase, not the moment the button was pressed. The ding follows a
+    // beat later, as the stamp is lifting away.
     _c.addListener(() {
-      if (_thudded || _c.status != AnimationStatus.forward) return;
-      if (_c.value < _T.liftAt / _T.total) return;
-      _thudded = true;
-      _sound.thud(_stamps);
+      if (_c.status != AnimationStatus.forward) return;
+      if (!_thudded && _c.value >= _T.liftAt / _T.total) {
+        _thudded = true;
+        _sound.thud(_stamps);
+      }
+      if (!_dinged && _c.value >= (_T.liftAt + 150) / _T.total) {
+        _dinged = true;
+        _sound.ding(_stamps);
+      }
     });
 
     // Debug affordance: ?t=0.46 parks the timeline at that point so a frame
@@ -278,8 +294,8 @@ class _StampPageState extends State<StampPage>
     final exitOffset = Offset(0, -exit * 430);
 
     // At rest the card is bigger than the box is on the page: the camera
-    // pulls back as the page comes into view. 1.45 measured off the reference.
-    final exitScale = (1 + 0.16 * exit) * lerpDouble(1.45, 1.0, t)!;
+    // pulls back as the page comes into view. Measured off the reference.
+    final exitScale = (1 + 0.16 * exit) * lerpDouble(1.38, 1.0, t)!;
 
     return SizedBox(
       height: lerpDouble(268, 700, t)!,
@@ -323,16 +339,19 @@ class _StampPageState extends State<StampPage>
                     position: position,
                     lift: lift,
                     rest: 1 - t,
-                    width: 224,
-                    depth: 132,
-                    height: 124,
+                    width: 240,
+                    depth: 150,
+                    height: 140,
                     face: StampFace(
                       date: _date,
                       headText: _headLabel,
                       color: _color,
                       background: StampCube.lidTone(1 - t),
                       interactive: _stage == Stage.picking,
-                      onDateChanged: (d) => setState(() => _date = d),
+                      onDateChanged: (d) {
+                        _sound.roll();
+                        setState(() => _date = d);
+                      },
                     ),
                   ),
                 ),
@@ -394,7 +413,7 @@ class _StampPageState extends State<StampPage>
                     _Chip(
                       text: l.chip,
                       selected: l == _label,
-                      onTap: () => setState(() => _label = l),
+                      onTap: _tap(() => setState(() => _label = l)),
                     ),
                 ],
               ),
@@ -406,7 +425,7 @@ class _StampPageState extends State<StampPage>
                   _Swatch(
                     color: c,
                     selected: c == _color,
-                    onTap: () => setState(() => _color = c),
+                    onTap: _tap(() => setState(() => _color = c)),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -473,14 +492,14 @@ class _StampPageState extends State<StampPage>
             _Chip(
               text: text,
               selected: _sound.mode == mode,
-              onTap: () => setState(() => _sound.mode = mode),
+              onTap: _tap(() => setState(() => _sound.mode = mode)),
             ),
         ]),
         tray([
           _Chip(
             text: 'Sound',
             selected: !_sound.muted,
-            onTap: () => setState(() => _sound.muted = false),
+            onTap: _tap(() => setState(() => _sound.muted = false)),
           ),
           _Chip(
             text: 'Muted',
@@ -524,7 +543,7 @@ class _StampPageState extends State<StampPage>
           _Pill(
             text: 'Done',
             filled: true,
-            onTap: () => setState(() => _confirmed = true),
+            onTap: _tap(() => setState(() => _confirmed = true)),
           ),
         ],
       ),
@@ -535,7 +554,7 @@ class _StampPageState extends State<StampPage>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Pill(text: 'Download PDF', onTap: () {}),
+        _Pill(text: 'Download PDF', onTap: _tap(() {})),
         const SizedBox(width: 8),
         _Pill(text: 'Next invoice', filled: true, onTap: _undo),
       ],
