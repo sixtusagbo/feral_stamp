@@ -17,6 +17,12 @@ class Tone {
   static const muted = Color(0xFF8A8A93);
   static const hairline = Color(0xFFE6E6E9);
 
+  /// The grey slab behind the selected row of each wheel.
+  static const wheelPill = Color(0xFFE9E9EC);
+
+  /// The tray the label chips sit in.
+  static const chipTray = Color(0xFFECECEF);
+
   static const swatches = <Color>[
     stamp,
     Color(0xFF2F6BFF),
@@ -55,9 +61,9 @@ class Type {
 
   static const eyebrow = TextStyle(
     fontFamily: _family,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
-    letterSpacing: 1.1,
+    letterSpacing: 2.2,
     color: Tone.muted,
   );
 
@@ -70,7 +76,7 @@ class Type {
 
   static const wheel = TextStyle(
     fontFamily: _family,
-    fontSize: 21,
+    fontSize: 25,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
     color: Tone.text,
@@ -78,7 +84,7 @@ class Type {
 
   static const axis = TextStyle(
     fontFamily: _family,
-    fontSize: 9,
+    fontSize: 9.5,
     fontWeight: FontWeight.w600,
     letterSpacing: 1.4,
     color: Tone.muted,

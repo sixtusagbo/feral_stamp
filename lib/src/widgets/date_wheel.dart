@@ -4,9 +4,9 @@ import '../theme.dart';
 
 /// One scrollable column of the stamp's date roller.
 ///
-/// Three rows are visible at a time. The centre row sits inside a pill and is
-/// the selected value; the neighbours fade and shrink as they roll past, which
-/// is what sells the thing as a physical wheel rather than a list.
+/// Five rows are visible. The centre row sits in a grey pill and is the
+/// selected value; the rest fall away in opacity and size so the column reads
+/// as a physical wheel rather than a list.
 class DateWheel extends StatefulWidget {
   const DateWheel({
     super.key,
@@ -25,8 +25,8 @@ class DateWheel extends StatefulWidget {
   final double width;
   final bool enabled;
 
-  static const rowHeight = 30.0;
-  static const visibleRows = 3;
+  static const rowHeight = 36.0;
+  static const visibleRows = 5;
   static const viewportHeight = rowHeight * visibleRows;
 
   @override
@@ -73,15 +73,8 @@ class _DateWheelState extends State<DateWheel> {
                 child: Container(
                   height: DateWheel.rowHeight - 2,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(9),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 5,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                    color: Tone.wheelPill,
+                    borderRadius: BorderRadius.circular(11),
                   ),
                 ),
               ),
@@ -91,9 +84,10 @@ class _DateWheelState extends State<DateWheel> {
                 physics: widget.enabled
                     ? const FixedExtentScrollPhysics()
                     : const NeverScrollableScrollPhysics(),
-                diameterRatio: 1.35,
-                perspective: 0.006,
-                overAndUnderCenterOpacity: 0.34,
+                diameterRatio: 1.5,
+                perspective: 0.004,
+                squeeze: 1.06,
+                overAndUnderCenterOpacity: 0.28,
                 onSelectedItemChanged: widget.onChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
                   childCount: widget.values.length,
@@ -101,7 +95,8 @@ class _DateWheelState extends State<DateWheel> {
                       Center(child: Text(widget.values[i], style: Type.wheel)),
                 ),
               ),
-              // Feather the top and bottom so values roll out of view.
+              // Feather the ends so values roll out of view rather than
+              // stopping dead at the edge of the face.
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -111,11 +106,13 @@ class _DateWheelState extends State<DateWheel> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Tone.card,
+                          Tone.card.withValues(alpha: 0.55),
                           Tone.card.withValues(alpha: 0),
                           Tone.card.withValues(alpha: 0),
+                          Tone.card.withValues(alpha: 0.55),
                           Tone.card,
                         ],
-                        stops: const [0.0, 0.26, 0.74, 1.0],
+                        stops: const [0.0, 0.14, 0.30, 0.70, 0.86, 1.0],
                       ),
                     ),
                   ),
@@ -124,7 +121,7 @@ class _DateWheelState extends State<DateWheel> {
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(widget.axisLabel, style: Type.axis),
       ],
     );

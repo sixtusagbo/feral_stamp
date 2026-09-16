@@ -8,7 +8,7 @@ void main() {
   testWidgets('stamping prints the date onto the invoice', (tester) async {
     // The scene plus its controls is taller than the default 800x600 surface,
     // and an off-screen button cannot be tapped.
-    tester.view.physicalSize = const Size(900, 1500);
+    tester.view.physicalSize = const Size(1200, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -34,7 +34,7 @@ void main() {
 
   testWidgets('holding the button stamps VOID instead of the label',
       (tester) async {
-    tester.view.physicalSize = const Size(900, 1500);
+    tester.view.physicalSize = const Size(1200, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 

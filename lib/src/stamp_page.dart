@@ -215,17 +215,18 @@ class _StampPageState extends State<StampPage>
     // Hover above the page, drop onto it, rebound, then leave upward.
     const hover = 180.0;
     final bounce = Curves.easeOut.transform(_lift.value) * Beat.bounce;
-    final z = hover * t * (1 - _press.value) + hover * bounce;
+    // Negative Z is towards the viewer once the camera is flipped.
+    final z = -(hover * t * (1 - _press.value) + hover * bounce);
     final exit = _lift.value * 620;
 
     // The head's resting spot on the page. While it floats, perspective lifts
     // it up the screen on its own, which is what puts it over the paper.
-    final groundY = 74.0 * t;
-    final groundX = 60.0 * t;
+    final groundY = 96.0 * t;
+    final groundX = 54.0 * t;
 
     final camera3d = Matrix4.identity()
       ..setEntry(3, 2, 0.0016)
-      ..rotateX(angle);
+      ..rotateX(-angle);
 
     return SizedBox(
       height: lerpDouble(212, 560, t)!,
@@ -293,28 +294,54 @@ class _StampPageState extends State<StampPage>
   Widget _picker() {
     return Column(
       children: [
-        Text(_date.longLine, style: Type.body),
+        Text(
+          _date.longLine,
+          style: Type.body.copyWith(
+            color: Tone.text,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
         const SizedBox(height: 12),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        // Wraps so the tray and the swatches stack on a narrow screen instead
+        // of running off the edge.
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 14,
+          runSpacing: 12,
           children: [
-            for (final l in StampLabel.values) ...[
-              _Chip(
-                text: l.chip,
-                selected: l == _label,
-                onTap: () => setState(() => _label = l),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Tone.chipTray,
+                borderRadius: BorderRadius.circular(999),
               ),
-              const SizedBox(width: 6),
-            ],
-            const SizedBox(width: 10),
-            for (final c in Tone.swatches) ...[
-              _Swatch(
-                color: c,
-                selected: c == _color,
-                onTap: () => setState(() => _color = c),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final l in StampLabel.values)
+                    _Chip(
+                      text: l.chip,
+                      selected: l == _label,
+                      onTap: () => setState(() => _label = l),
+                    ),
+                ],
               ),
-              const SizedBox(width: 6),
-            ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final c in Tone.swatches) ...[
+                  _Swatch(
+                    color: c,
+                    selected: c == _color,
+                    onTap: () => setState(() => _color = c),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -419,19 +446,27 @@ class _Chip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? Tone.text : Colors.white,
+          color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Tone.cardEdge),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 5,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           text,
           style: TextStyle(
             fontFamily: 'Helvetica Neue',
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: selected ? Colors.white : Tone.muted,
+            color: selected ? Tone.text : Tone.muted,
           ),
         ),
       ),
@@ -455,14 +490,20 @@ class _Swatch extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 16,
-        height: 16,
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
-          color: color,
           shape: BoxShape.circle,
           border: Border.all(
-            color: selected ? Tone.text : Colors.transparent,
-            width: 1.6,
+            color: selected ? color : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Center(
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
         ),
       ),

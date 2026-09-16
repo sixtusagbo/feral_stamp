@@ -33,137 +33,148 @@ class InvoiceSheet extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: height),
       padding: const EdgeInsets.fromLTRB(26, 24, 26, 18),
       decoration: BoxDecoration(color: Tone.paper, boxShadow: paperShadow(1)),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Invoice',
-                    style: TextStyle(
-                      fontFamily: 'Helvetica Neue',
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Tone.text,
-                    ),
-                  ),
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Tone.text,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-              const Text(Invoice.studio, style: _micro),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Field('ABN', Invoice.abn),
-                        _Field('Email', Invoice.email),
-                        _Field('Web', Invoice.web),
-                        _Field('Address', Invoice.address),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _Field('Invoice to', Invoice.billTo),
-                        const _Field('Invoice ID', Invoice.id),
-                        const _Field('Date of issue', Invoice.issued),
-                        const _Field('Payment due', Invoice.due),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              const _Rule(),
-              const SizedBox(height: 8),
-              const Text('Description of services', style: _heading),
-              const SizedBox(height: 6),
-              for (final item in Invoice.items) _Row(item),
-              const SizedBox(height: 6),
-              const _Rule(),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Flexible(
-                    child: Text(
-                      'Total amount due:  ',
-                      style: _micro,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Text(
-                    Invoice.total,
-                    style: TextStyle(
-                      fontFamily: 'Helvetica Neue',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Tone.text,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Bank details for payment:', style: _heading),
-              const SizedBox(height: 3),
               const Text(
-                'Bank: ${Invoice.bank}\n'
-                'BSB: ${Invoice.bsb}\n'
-                'Account number: ${Invoice.account}\n'
-                'Name: ${Invoice.studio}',
-                style: _micro,
+                'Invoice',
+                style: TextStyle(
+                  fontFamily: 'Helvetica Neue',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Tone.text,
+                ),
               ),
-              const SizedBox(height: 10),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'Thank you for your business.',
-                      style: _micro,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      Invoice.web,
-                      style: _micro,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Tone.text,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ],
           ),
-          // The mark lands to the right of the bank block, not on top of it.
-          Positioned(
-            right: 14,
-            bottom: 86,
-            child: StampMark(
-              label: headText,
-              date: date.stampLine,
-              color: color,
-              bleed: bleed,
-            ),
+          const Text(Invoice.studio, style: _micro),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Field('ABN', Invoice.abn),
+                    _Field('Email', Invoice.email),
+                    _Field('Web', Invoice.web),
+                    _Field('Address', Invoice.address),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _Field('Invoice to', Invoice.billTo),
+                    const _Field('Invoice ID', Invoice.id),
+                    const _Field('Date of issue', Invoice.issued),
+                    const _Field('Payment due', Invoice.due),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const _Rule(),
+          const SizedBox(height: 8),
+          const Text('Description of services', style: _heading),
+          const SizedBox(height: 6),
+          for (final item in Invoice.items) _Row(item),
+          const SizedBox(height: 6),
+          const _Rule(),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const Flexible(
+                child: Text(
+                  'Total amount due:  ',
+                  style: _micro,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Text(
+                Invoice.total,
+                style: TextStyle(
+                  fontFamily: 'Helvetica Neue',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Tone.text,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 26),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Bank details for payment:', style: _heading),
+                    SizedBox(height: 3),
+                    Text(
+                      'Bank: ${Invoice.bank}\n'
+                      'BSB: ${Invoice.bsb}\n'
+                      'Account number: ${Invoice.account}\n'
+                      'Name: ${Invoice.studio}',
+                      style: _micro,
+                    ),
+                  ],
+                ),
+              ),
+              // Keeps its natural size on a normal page and scales down
+              // rather than crushing the bank block on a narrow one.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: StampMark(
+                    label: headText,
+                    date: date.stampLine,
+                    color: color,
+                    bleed: bleed,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  'Thank you for your business.',
+                  style: _micro,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  Invoice.web,
+                  style: _micro,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ],
       ),
