@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -24,7 +25,24 @@ class FeralStampApp extends StatelessWidget {
         scaffoldBackgroundColor: Tone.page,
         colorScheme: ColorScheme.fromSeed(seedColor: Tone.stamp),
       ),
+      // Flutter leaves mouse and trackpad out of dragDevices by default, so
+      // on web and desktop a cursor cannot roll the wheels at all. This is a
+      // component you drag, so they have to be in.
+      scrollBehavior: const _DragWithAnything(),
       home: const StampPage(),
     );
   }
+}
+
+class _DragWithAnything extends MaterialScrollBehavior {
+  const _DragWithAnything();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+  };
 }
