@@ -119,6 +119,11 @@ class _StampPageState extends State<StampPage>
     // A global handler rather than a focus node: tapping a chip or a swatch
     // must not quietly kill the Enter shortcut.
     HardwareKeyboard.instance.addHandler(_onKey);
+
+    // Debug affordance: ?t=0.46 parks the timeline at that point so a frame
+    // can be inspected in a real browser without driving the press.
+    final park = double.tryParse(Uri.base.queryParameters['t'] ?? '');
+    if (park != null) _c.value = park.clamp(0.0, 1.0);
   }
 
   bool _onKey(KeyEvent e) {
