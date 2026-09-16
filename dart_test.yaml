@@ -1,0 +1,5 @@
+tags:
+  goldens:
+    # Golden images are rendered on the machine that generated them; fonts and
+    # rasterisation differ across platforms, so CI skips these.
+    skip: false

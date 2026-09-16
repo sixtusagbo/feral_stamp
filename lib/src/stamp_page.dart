@@ -222,25 +222,42 @@ class _StampPageState extends State<StampPage>
     final camera = (t - _rise.value).clamp(0.0, 1.0);
     final angle = camera * 0.66;
 
-    // Hover above the page, drop onto it, rebound, then leave upward.
-    const hover = 180.0;
-    final bounce = Curves.easeOut.transform(_lift.value) * Beat.bounce;
-    // Negative Z is towards the viewer once the camera is flipped.
-    final z = -(hover * t * (1 - _press.value) + hover * bounce);
-    final exit = _lift.value * 620;
+    // The head sits well above the page and comes down onto it. Most of that
+    // travel is explicit vertical motion; Z only supplies a slight change of
+    // scale. Driving the descent from Z instead magnifies the head to ~1.4x
+    // while it hovers, which swamps the page.
+    const hoverLift = 168.0;
+    const hoverZ = 52.0;
+    // The rubber rebounds quickly off the paper, then the head accelerates
+    // away. An ease-out on the exit makes it leap off in the first frames,
+    // which reads as a cut rather than a lift.
+    final bounce =
+        Curves.easeOutCubic.transform((_lift.value * 3).clamp(0.0, 1.0)) *
+        Beat.bounce;
+    final settle = (1 - _press.value) + bounce;
 
-    // The head's resting spot on the page. While it floats, perspective lifts
-    // it up the screen on its own, which is what puts it over the paper.
-    final groundY = 96.0 * t;
-    final groundX = 54.0 * t;
+    // Leaving is a screen-space rise with a slight scale-up, applied outside
+    // the perspective transform. Pushing the exit through the 3D matrix works
+    // out to a dive at the camera: the head's own height spans a huge depth
+    // range once it is close, and the perspective divide shears it apart.
+    final exit = Curves.easeInCubic.transform(_lift.value);
+    final z = -(hoverZ * t * settle);
+
+    // Where the head meets the paper. The translation moves the head's centre,
+    // but it is the rubber pad at its bottom that has to land on the mark, so
+    // the resting point sits roughly half a head above it.
+    const markY = 126.0;
+    const padOffset = 147.0;
+    final groundY = ((markY - padOffset) * t) - hoverLift * t * settle;
+    final groundX = 88.0 * t;
 
     final camera3d = Matrix4.identity()
       ..setEntry(3, 2, 0.0016)
       ..rotateX(-angle);
 
     return SizedBox(
-      height: lerpDouble(268, 600, t)!,
-      width: 440,
+      height: lerpDouble(268, 700, t)!,
+      width: 620,
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
@@ -253,29 +270,40 @@ class _StampPageState extends State<StampPage>
                   key: cameraKey,
                   alignment: Alignment.center,
                   transform: camera3d,
-                  child: InvoiceSheet(
-                    headText: _headLabel,
-                    date: _date,
-                    color: _inkColor,
-                    bleed: _bleed.value,
+                  // The sheet is designed at a readable width and scaled up so
+                  // the page reads large against the head, as in the reference.
+                  child: Transform.scale(
+                    scale: 1.4,
+                    child: InvoiceSheet(
+                      headText: _headLabel,
+                      date: _date,
+                      color: _inkColor,
+                      bleed: _bleed.value,
+                    ),
                   ),
                 ),
               ),
             ),
           _Unclamped(
             child: Opacity(
-              opacity: (1 - _lift.value).clamp(0.0, 1.0),
-              child: Transform(
-                alignment: Alignment.center,
-                transform: camera3d.clone()
-                  ..translateByDouble(groundX, groundY - exit, z, 1.0),
-                child: StampHead(
-                  date: _date,
-                  headText: _headLabel,
-                  color: _color,
-                  interactive: _stage == Stage.picking,
-                  solid: t > 0.04,
-                  onDateChanged: (d) => setState(() => _date = d),
+              opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
+              child: Transform.translate(
+                offset: Offset(0, -exit * 430),
+                child: Transform.scale(
+                  scale: 1 + 0.16 * exit,
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: camera3d.clone()
+                      ..translateByDouble(groundX, groundY, z, 1.0),
+                    child: StampHead(
+                      date: _date,
+                      headText: _headLabel,
+                      color: _color,
+                      interactive: _stage == Stage.picking,
+                      solid: t > 0.04,
+                      onDateChanged: (d) => setState(() => _date = d),
+                    ),
+                  ),
                 ),
               ),
             ),

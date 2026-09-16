@@ -34,7 +34,7 @@ class StampHead extends StatelessWidget {
   /// Grows the block into 3D: body, rubber pad, contact shadow.
   final bool solid;
 
-  static const width = 330.0;
+  static const width = 292.0;
   static const _radius = 34.0;
   static const _bodyHeight = 74.0;
   static const _padHeight = 20.0;
@@ -102,7 +102,7 @@ class StampHead extends StatelessWidget {
                       values: Wheels.days,
                       index: date.day - 1,
                       axisLabel: 'DAY',
-                      width: 68,
+                      width: 60,
                       enabled: interactive,
                       onChanged: (i) => _emit(day: i + 1),
                     ),
@@ -110,7 +110,7 @@ class StampHead extends StatelessWidget {
                       values: Wheels.months,
                       index: date.month - 1,
                       axisLabel: 'MONTH',
-                      width: 92,
+                      width: 82,
                       enabled: interactive,
                       onChanged: (i) => _emit(month: i + 1),
                     ),
@@ -118,7 +118,7 @@ class StampHead extends StatelessWidget {
                       values: Wheels.years,
                       index: date.year - 2021,
                       axisLabel: 'YEAR',
-                      width: 92,
+                      width: 82,
                       enabled: interactive,
                       onChanged: (i) => _emit(year: 2021 + i),
                     ),

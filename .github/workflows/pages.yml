@@ -27,7 +27,8 @@ jobs:
 
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
+      # Goldens are rendered per-machine; they are a local tool, not a gate.
+      - run: flutter test --exclude-tags goldens
 
       # Pages serves the site from /<repo>/, so the base href has to match or
       # every asset 404s.

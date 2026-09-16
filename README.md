@@ -67,8 +67,26 @@ unseeded one makes the stamp crawl while the ink fades in.
 ```bash
 flutter pub get
 flutter run            # or: flutter run -d chrome
-flutter test
+flutter test --exclude-tags goldens
 ```
+
+### Looking at the animation
+
+Driving this through a browser is unreliable: synthetic clicks and key events do not consistently
+reach the Flutter canvas. Two things help instead.
+
+`test/press_frames_test.dart` renders the press at fixed points on the timeline:
+
+```bash
+flutter test --update-goldens test/press_frames_test.dart
+open test/goldens/
+```
+
+Those images are a local inspection tool, not a CI gate, which is why they are tagged `goldens` and
+excluded above. They use the test font, so the text renders as blocks; it is the geometry you are
+looking at.
+
+In the browser, `?slow=12` dilates the whole timeline so the press can be watched frame by frame.
 
 ## Deploying
 
