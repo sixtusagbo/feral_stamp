@@ -297,7 +297,7 @@ class _StampPageState extends State<StampPage>
                     rest: 1 - t,
                     width: 224,
                     depth: 132,
-                    height: 102,
+                    height: 96,
                   ),
                 ),
               ),

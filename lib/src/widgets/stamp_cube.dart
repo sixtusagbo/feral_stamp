@@ -4,13 +4,19 @@ import 'package:flutter/material.dart';
 
 /// The stamp as a real box under one camera.
 ///
-/// Three quads share a single perspective and rotation. The camera tips the
-/// page back by [angle]; the box sits on the page, so its top face takes the
-/// same tilt and its front face, vertical in the world, ends up rotated
-/// `pi/2 - angle` and foreshortened too. A shadow quad lies flat on the page
-/// beneath it. Because all three come off the same matrix they stay
-/// consistent at any angle, which is what earlier attempts (a tilted card, a
-/// screen-space slab) never managed.
+/// Four quads share a single perspective and rotation. The camera tips the
+/// page back by [angle]; the box sits on the page, so its lid takes the same
+/// tilt, and its walls, vertical in the world, end up rotated `pi/2 - angle`
+/// and foreshortened too. A shadow lies flat on the page beneath it.
+///
+/// It is a rounded prism, and the reference draws it the way you would in
+/// CSS: the lid is a rounded rectangle on *every* corner at *every* angle,
+/// and the body is a full-width slab behind it that reaches up past the lid's
+/// front edge by one corner radius. The lid covers that overlap everywhere
+/// except at its rounded corners, so the body shows through the cutouts and
+/// reads as the curved side surface wrapping round. The rubber pad does the
+/// same under the body's rounded heel. Squaring the lid's bottom corners into
+/// the wall gives a different, boxier object.
 ///
 /// Local frame: origin at the base centre on the page, X right, Y down the
 /// page towards the viewer, Z up off the page. Flutter's Z points into the
@@ -35,10 +41,10 @@ class StampCube extends StatelessWidget {
 
   final double width;
 
-  /// Extent along the page (the top face's height when seen flat).
+  /// Extent along the page (the lid's height when seen flat).
   final double depth;
 
-  /// How tall the box stands off the page.
+  /// How tall the box stands off the page, pad included.
   final double height;
 
   /// Where the base centre sits on the page, in the page's coordinates.
@@ -48,27 +54,42 @@ class StampCube extends StatelessWidget {
   final double lift;
 
   /// 1 while the box is still the flat picker card, 0 once it is on the page.
-  /// At rest it is a card: all four corners round, no wall, a soft lift rather
-  /// than a contact shadow. Those resolve into the box as this falls to 0.
+  /// Drives the shadow (a soft lift at rest, contact on the page), the lid's
+  /// tint, and whether the walls exist at all: edge-on at rest they would
+  /// draw as a hairline along the card's bottom edge.
   final double rest;
 
-  /// Content drawn on the top face. Null leaves it blank.
+  /// Content drawn on the lid. Null leaves it blank.
   final Widget? face;
 
-  static const _topRadius = 28.0;
+  static const _lidRadius = 30.0;
+  static const _heelRadius = 30.0;
 
-  /// Big: the front wall turns under into the base rather than meeting it at
-  /// a corner, which is most of what makes the block read as a solid.
-  static const _heelRadius = 44.0;
-  static const _edge = 11.0;
+  /// The rubber: its own slab under the body, inset and rounded.
+  static const _padHeight = 14.0;
+  static const _padInset = 7.0;
+  static const _padRadius = 24.0;
+
+  /// How far a lower slab reaches up behind the one above it, so it shows
+  /// through that slab's rounded corners.
+  static const _overlap = 16.0;
 
   Matrix4 _camera() => Matrix4.identity()
     ..setEntry(3, 2, perspective)
     ..rotateX(-angle)
     ..translateByDouble(position.dx, position.dy, -lift, 1);
 
+  /// A vertical quad in the front plane spanning [from]..[to] off the page.
+  Matrix4 _wall(double from, double to) => _camera()
+    ..translateByDouble(0, depth / 2, -(from + to) / 2, 1)
+    ..rotateX(math.pi / 2);
+
   @override
   Widget build(BuildContext context) {
+    final walls = rest < 0.98;
+    final bodyFrom = _padHeight;
+    final bodyTo = height + _lidRadius;
+
     // Every quad is centred on the same point, so one alignment works for all.
     return SizedBox(
       width: width,
@@ -79,54 +100,47 @@ class StampCube extends StatelessWidget {
         children: [
           Transform(
             alignment: Alignment.center,
-            transform: _camera()..translateByDouble(6, 14, 0, 1),
+            transform: _camera()..translateByDouble(4, 12, 0, 1),
             child: _shadow(),
           ),
-          Transform(
-            alignment: Alignment.center,
-            transform: _camera()..translateByDouble(0, 4, 0, 1),
-            child: _contact(),
-          ),
-          if (rest < 0.98)
+          if (walls)
             Transform(
               alignment: Alignment.center,
-              transform: _camera()
-                ..translateByDouble(0, depth / 2, -height / 2, 1)
-                ..rotateX(math.pi / 2),
-              child: _front(),
+              transform: _wall(0, _padHeight + _overlap),
+              child: _pad(_padHeight + _overlap),
+            ),
+          if (walls)
+            Transform(
+              alignment: Alignment.center,
+              transform: _wall(bodyFrom, bodyTo),
+              child: _body(bodyTo - bodyFrom),
             ),
           Transform(
             alignment: Alignment.center,
             transform: _camera()..translateByDouble(0, 0, -height, 1),
-            child: _top(),
+            child: _lid(),
           ),
         ],
       ),
     );
   }
 
-  /// The lid. At rest it is the whole card and rounds on every corner; on the
-  /// page its bottom edge is the crease into the front wall and squares off.
-  /// It also sits a shade lighter at rest, where nothing is casting on it.
-  Widget _top() {
-    final bottom = Radius.circular(_topRadius * rest);
+  /// The lid: a rounded rectangle on every corner, whatever the camera does.
+  /// A shade greyer than the lit body, and lighter again at rest where there
+  /// is nothing for it to be in the shade of.
+  Widget _lid() {
     return Container(
       width: width,
       height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(_topRadius),
-          topRight: const Radius.circular(_topRadius),
-          bottomLeft: bottom,
-          bottomRight: bottom,
-        ),
+        borderRadius: BorderRadius.circular(_lidRadius),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.lerp(const Color(0xFFEBEBEF), const Color(0xFFF4F4F6), rest)!,
-            Color.lerp(const Color(0xFFF2F2F5), const Color(0xFFFAFAFB), rest)!,
-            Color.lerp(const Color(0xFFF6F6F8), const Color(0xFFFDFDFD), rest)!,
+            Color.lerp(const Color(0xFFEAEAEE), const Color(0xFFF4F4F6), rest)!,
+            Color.lerp(const Color(0xFFF1F1F4), const Color(0xFFFAFAFB), rest)!,
+            Color.lerp(const Color(0xFFF5F5F7), const Color(0xFFFDFDFD), rest)!,
           ],
           stops: const [0.0, 0.6, 1.0],
         ),
@@ -135,94 +149,75 @@ class StampCube extends StatelessWidget {
     );
   }
 
-  /// The front face. The rubber is the bottom strip of this same quad, and the
-  /// whole thing is clipped by the heel radius, so the strip's ends follow the
-  /// corner arc and taper as the footprint curves away: a crescent, which is
-  /// what the base of a rounded block looks like from above. Drawn as its own
-  /// bar it reads as a flat strip glued on.
-  Widget _front() {
-    return SizedBox(
+  /// The body: full width, lit brightest just under the lid and falling off
+  /// towards the heel, with a faint vignette at the sides so the slab reads as
+  /// having some roundness across it. Its bottom corners round on the heel
+  /// radius; its top is square and hidden behind the lid.
+  Widget _body(double h) {
+    const radius = BorderRadius.vertical(bottom: Radius.circular(_heelRadius));
+    return Container(
       width: width,
-      height: height,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(_heelRadius),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color(0xFFCFCFD7),
-                          Color(0xFFEDEDF2),
-                          Color(0xFFFFFFFF),
-                          Color(0xFFFDFDFE),
-                          Color(0xFFE9E9EE),
-                          Color(0xFFCBCBD4),
-                        ],
-                        stops: [0.0, 0.16, 0.42, 0.58, 0.84, 1.0],
-                      ),
-                    ),
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0x24000000),
-                            Color(0x06000000),
-                            Color(0x00000000),
-                            Color(0x10000000),
-                          ],
-                          stops: [0.0, 0.16, 0.70, 1.0],
-                        ),
-                      ),
-                      child: SizedBox.expand(),
-                    ),
-                  ),
-                ),
-                // A lit lip along the bottom of the wall, just above the rubber.
-                const SizedBox(
-                  height: 1.5,
-                  child: ColoredBox(color: Color(0xFFF7F7F9)),
-                ),
-                const SizedBox(
-                  height: _edge,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF3A3A44), Color(0xFF15151B)],
-                      ),
-                    ),
-                    child: SizedBox.expand(),
-                  ),
-                ),
-              ],
-            ),
+      height: h,
+      decoration: const BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0xFFF7F7F9),
+            Color(0xFFEDEDF1),
           ],
+          stops: [0.0, 0.30, 0.72, 1.0],
+        ),
+      ),
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            colors: [
+              Color(0x16000000),
+              Color(0x00000000),
+              Color(0x00000000),
+              Color(0x14000000),
+            ],
+            stops: [0.0, 0.12, 0.88, 1.0],
+          ),
+        ),
+        child: SizedBox.expand(),
+      ),
+    );
+  }
+
+  /// The rubber: a dark slab, narrower than the body, showing beneath the
+  /// body's rounded heel and through its corner cutouts.
+  Widget _pad(double h) {
+    return Container(
+      width: width - _padInset * 2,
+      height: h,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(_padRadius),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2C2C35), Color(0xFF1B1B22), Color(0xFF111116)],
+          stops: [0.0, 0.6, 1.0],
         ),
       ),
     );
   }
 
-  /// Lies flat on the page, offset a little towards the viewer. A blurred
-  /// shadow on the footprint rather than a gradient fill: a radial gradient
-  /// reaches transparent at half the shortest side, which is inside the box's
-  /// own outline, so nothing of it ever showed.
-  ///
-  /// At rest this is the card's only shadow, and it is a lift, not a drop:
-  /// light, wide, and pushed down a little. On the page it tightens and
-  /// darkens, then spreads and fades again as the box is raised.
+  /// Lies flat on the page, nudged towards the viewer. Soft and light: the
+  /// reference glows off the page rather than sitting in a pool of shade. At
+  /// rest it is the card's lift; on the page it draws in a little, then
+  /// spreads and thins again as the box is raised.
   Widget _shadow() {
     final t = (lift / 120).clamp(0.0, 1.0);
     final ground = 1 - rest;
-    final strength = (1 - t * 0.7) * (0.35 + 0.65 * ground);
+    final strength = (1 - t * 0.6) * (0.55 + 0.45 * ground);
     return Container(
       width: width,
       height: depth,
@@ -230,32 +225,16 @@ class StampCube extends StatelessWidget {
         borderRadius: BorderRadius.circular(_heelRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.26 * strength),
-            blurRadius: 34 + t * 30 + rest * 26,
-            spreadRadius: 14 + t * 16 - rest * 10,
-            offset: Offset(0, 20 * rest),
+            color: Colors.black.withValues(alpha: 0.13 * strength),
+            blurRadius: 40 + t * 30 + rest * 20,
+            spreadRadius: 10 + t * 14 - rest * 6,
+            offset: Offset(0, 16 * rest + 6 * ground),
           ),
-        ],
-      ),
-    );
-  }
-
-  /// A tight dark shadow hugging the base, gone almost as soon as the box
-  /// leaves the page: the cue for the moment of contact. There is no page to
-  /// contact at rest, so it only exists once the camera has tilted.
-  Widget _contact() {
-    final t = (lift / 40).clamp(0.0, 1.0);
-    final ground = 1 - rest;
-    return Container(
-      width: width,
-      height: depth,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_heelRadius),
-        boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.34 * (1 - t) * ground),
-            blurRadius: 10,
-            spreadRadius: 3,
+            color: Colors.black.withValues(alpha: 0.07 * strength),
+            blurRadius: 90 + t * 40,
+            spreadRadius: 24,
+            offset: Offset(0, 22 * rest + 10 * ground),
           ),
         ],
       ),
