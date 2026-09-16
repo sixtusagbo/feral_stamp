@@ -2,21 +2,19 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// The stamp as a real box under one camera.
+/// The stamp as a real object under one camera.
 ///
-/// Four quads share a single perspective and rotation. The camera tips the
-/// page back by [angle]; the box sits on the page, so its lid takes the same
-/// tilt, and its walls, vertical in the world, end up rotated `pi/2 - angle`
-/// and foreshortened too. A shadow lies flat on the page beneath it.
+/// It is an extruded rounded rectangle: the lid's outline swept from the page
+/// up to the lid. The side surface is painted as that sweep, a stack of thin
+/// slices of the same rounded rect at increasing height, each pushed through
+/// the camera, so its corners are quarter-cylinders and its outline hugs the
+/// lid's at every angle. Seen nearly flat it collapses into a thin band that
+/// follows the lid's curve; seen from above it is a tall wall with rounded
+/// corners. Drawing the wall as a flat slab behind the lid gets neither: the
+/// corners come out as square ears and the junction reads as a shelf.
 ///
-/// It is a rounded prism, and the reference draws it the way you would in
-/// CSS: the lid is a rounded rectangle on *every* corner at *every* angle,
-/// and the body is a full-width slab behind it that reaches up past the lid's
-/// front edge by one corner radius. The lid covers that overlap everywhere
-/// except at its rounded corners, so the body shows through the cutouts and
-/// reads as the curved side surface wrapping round. The rubber pad does the
-/// same under the body's rounded heel. Squaring the lid's bottom corners into
-/// the wall gives a different, boxier object.
+/// The rubber is simply the bottom slices, inset and dark. The lid is a
+/// widget so it can carry the wheels. A shadow lies flat on the page beneath.
 ///
 /// Local frame: origin at the base centre on the page, X right, Y down the
 /// page towards the viewer, Z up off the page. Flutter's Z points into the
@@ -44,7 +42,7 @@ class StampCube extends StatelessWidget {
   /// Extent along the page (the lid's height when seen flat).
   final double depth;
 
-  /// How tall the box stands off the page, pad included.
+  /// How tall the object stands off the page, pad included.
   final double height;
 
   /// Where the base centre sits on the page, in the page's coordinates.
@@ -53,44 +51,25 @@ class StampCube extends StatelessWidget {
   /// How far the base is raised off the page along its normal.
   final double lift;
 
-  /// 1 while the box is still the flat picker card, 0 once it is on the page.
-  /// Drives the shadow (a soft lift at rest, contact on the page), the lid's
-  /// tint, and whether the walls exist at all: edge-on at rest they would
-  /// draw as a hairline along the card's bottom edge.
+  /// 1 while the object is still the flat picker card, 0 once it is on the
+  /// page. Drives the shadow (a soft lift at rest, contact on the page) and
+  /// the lid's tint.
   final double rest;
 
   /// Content drawn on the lid. Null leaves it blank.
   final Widget? face;
 
-  static const _lidRadius = 30.0;
-  static const _heelRadius = 30.0;
-
-  /// The rubber: its own slab under the body, inset and rounded.
-  static const _padHeight = 14.0;
-  static const _padInset = 7.0;
-  static const _padRadius = 24.0;
-
-  /// How far a lower slab reaches up behind the one above it, so it shows
-  /// through that slab's rounded corners.
-  static const _overlap = 16.0;
+  static const radius = 30.0;
+  static const padHeight = 13.0;
 
   Matrix4 _camera() => Matrix4.identity()
     ..setEntry(3, 2, perspective)
     ..rotateX(-angle)
     ..translateByDouble(position.dx, position.dy, -lift, 1);
 
-  /// A vertical quad in the front plane spanning [from]..[to] off the page.
-  Matrix4 _wall(double from, double to) => _camera()
-    ..translateByDouble(0, depth / 2, -(from + to) / 2, 1)
-    ..rotateX(math.pi / 2);
-
   @override
   Widget build(BuildContext context) {
-    final walls = rest < 0.98;
-    final bodyFrom = _padHeight;
-    final bodyTo = height + _lidRadius;
-
-    // Every quad is centred on the same point, so one alignment works for all.
+    // Every layer is centred on the same point, so one alignment works for all.
     return SizedBox(
       width: width,
       height: depth,
@@ -103,17 +82,15 @@ class StampCube extends StatelessWidget {
             transform: _camera()..translateByDouble(4, 12, 0, 1),
             child: _shadow(),
           ),
-          if (walls)
-            Transform(
-              alignment: Alignment.center,
-              transform: _wall(0, _padHeight + _overlap),
-              child: _pad(_padHeight + _overlap),
-            ),
-          if (walls)
-            Transform(
-              alignment: Alignment.center,
-              transform: _wall(bodyFrom, bodyTo),
-              child: _body(bodyTo - bodyFrom),
+          if (angle > 0.005)
+            CustomPaint(
+              size: Size(width, depth),
+              painter: _SidePainter(
+                camera: _camera(),
+                height: height,
+                padHeight: padHeight,
+                radius: radius,
+              ),
             ),
           Transform(
             alignment: Alignment.center,
@@ -126,14 +103,14 @@ class StampCube extends StatelessWidget {
   }
 
   /// The lid: a rounded rectangle on every corner, whatever the camera does.
-  /// A shade greyer than the lit body, and lighter again at rest where there
+  /// A shade greyer than the lit wall, and lighter again at rest where there
   /// is nothing for it to be in the shade of.
   Widget _lid() {
     return Container(
       width: width,
       height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_lidRadius),
+        borderRadius: BorderRadius.circular(radius),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -149,71 +126,10 @@ class StampCube extends StatelessWidget {
     );
   }
 
-  /// The body: full width, lit brightest just under the lid and falling off
-  /// towards the heel, with a faint vignette at the sides so the slab reads as
-  /// having some roundness across it. Its bottom corners round on the heel
-  /// radius; its top is square and hidden behind the lid.
-  Widget _body(double h) {
-    const radius = BorderRadius.vertical(bottom: Radius.circular(_heelRadius));
-    return Container(
-      width: width,
-      height: h,
-      decoration: const BoxDecoration(
-        borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF),
-            Color(0xFFF7F7F9),
-            Color(0xFFEDEDF1),
-          ],
-          stops: [0.0, 0.30, 0.72, 1.0],
-        ),
-      ),
-      child: const DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            colors: [
-              Color(0x16000000),
-              Color(0x00000000),
-              Color(0x00000000),
-              Color(0x14000000),
-            ],
-            stops: [0.0, 0.12, 0.88, 1.0],
-          ),
-        ),
-        child: SizedBox.expand(),
-      ),
-    );
-  }
-
-  /// The rubber: a dark slab, narrower than the body, showing beneath the
-  /// body's rounded heel and through its corner cutouts.
-  Widget _pad(double h) {
-    return Container(
-      width: width - _padInset * 2,
-      height: h,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(_padRadius),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2C2C35), Color(0xFF1B1B22), Color(0xFF111116)],
-          stops: [0.0, 0.6, 1.0],
-        ),
-      ),
-    );
-  }
-
   /// Lies flat on the page, nudged towards the viewer. Soft and light: the
   /// reference glows off the page rather than sitting in a pool of shade. At
   /// rest it is the card's lift; on the page it draws in a little, then
-  /// spreads and thins again as the box is raised.
+  /// spreads and thins again as the object is raised.
   Widget _shadow() {
     final t = (lift / 120).clamp(0.0, 1.0);
     final ground = 1 - rest;
@@ -222,7 +138,7 @@ class StampCube extends StatelessWidget {
       width: width,
       height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_heelRadius),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.13 * strength),
@@ -240,4 +156,115 @@ class StampCube extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Paints the side surface as a sweep of the lid's rounded rect from the page
+/// (h = 0) up to just under the lid, bottom slice first so each one covers the
+/// last and only the front band of every slice survives. Shading is by height:
+/// dark rubber at the base, a lit wall above it that falls off towards the
+/// heel, and a faint horizontal vignette so the wall reads as having some
+/// roundness across it.
+class _SidePainter extends CustomPainter {
+  const _SidePainter({
+    required this.camera,
+    required this.height,
+    required this.padHeight,
+    required this.radius,
+  });
+
+  final Matrix4 camera;
+  final double height;
+  final double padHeight;
+  final double radius;
+
+  static const _step = 1.25;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centre = size.center(Offset.zero);
+    final slices = (height / _step).ceil();
+
+    for (var i = 0; i <= slices; i++) {
+      final h = math.min(i * _step, height);
+      final isPad = h < padHeight;
+
+      // The pad is a little narrower than the wall, and the wall's base is
+      // filleted into it over a few slices so the heel turns under.
+      var inset = 0.0;
+      if (isPad) {
+        inset = 6.0;
+      } else {
+        const fillet = 9.0;
+        final up = h - padHeight;
+        if (up < fillet) {
+          final k = 1 - up / fillet;
+          inset = fillet * (1 - math.sqrt(1 - k * k));
+        }
+      }
+
+      final rect = Rect.fromLTWH(
+        inset,
+        inset,
+        size.width - inset * 2,
+        size.height - inset * 2,
+      );
+      final rrect = RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(math.max(radius - inset, 4)),
+      );
+
+      final tone = _tone(h);
+      final paint = Paint()
+        ..isAntiAlias = true
+        ..shader = LinearGradient(
+          colors: [
+            Color.lerp(tone, Colors.black, 0.10)!,
+            tone,
+            tone,
+            Color.lerp(tone, Colors.black, 0.10)!,
+          ],
+          stops: const [0.0, 0.16, 0.84, 1.0],
+        ).createShader(rect);
+
+      final m = camera.clone()..translateByDouble(0, 0, -h, 1);
+
+      canvas
+        ..save()
+        ..translate(centre.dx, centre.dy)
+        ..transform(m.storage)
+        ..translate(-centre.dx, -centre.dy)
+        ..drawRRect(rrect, paint)
+        ..restore();
+    }
+  }
+
+  Color _tone(double h) {
+    if (h < padHeight) {
+      final k = h / padHeight;
+      return Color.lerp(const Color(0xFF111116), const Color(0xFF34343E), k)!;
+    }
+    final k = ((h - padHeight) / (height - padHeight)).clamp(0.0, 1.0);
+    // Heel to lid: light grey, up to white, with a shade taken off right
+    // under the lid's lip.
+    if (k < 0.55) {
+      return Color.lerp(
+        const Color(0xFFE9E9EE),
+        const Color(0xFFFFFFFF),
+        k / 0.55,
+      )!;
+    }
+    if (k < 0.94) return const Color(0xFFFFFFFF);
+    return Color.lerp(
+      const Color(0xFFFFFFFF),
+      const Color(0xFFE6E6EB),
+      (k - 0.94) / 0.06,
+    )!;
+  }
+
+  @override
+  bool shouldRepaint(_SidePainter old) =>
+      old.camera != camera ||
+      old.height != height ||
+      old.padHeight != padHeight ||
+      old.radius != radius;
 }
