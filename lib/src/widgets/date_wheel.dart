@@ -25,7 +25,7 @@ class DateWheel extends StatefulWidget {
   final double width;
   final bool enabled;
 
-  static const rowHeight = 36.0;
+  static const rowHeight = 30.0;
   static const visibleRows = 5;
   static const viewportHeight = rowHeight * visibleRows;
 

@@ -240,8 +240,8 @@ class _StampPageState extends State<StampPage>
     //
     // Its resting spot is derived by pushing the mark's position on the page
     // through the same camera, so the two stay aligned at any tilt angle.
-    const markOnPage = Offset(83, 176);
-    const padOffset = 150.0;
+    const markOnPage = Offset(115, 176);
+    const padOffset = 155.0;
     final markOnScreen = MatrixUtils.transformPoint(camera3d, markOnPage);
     final rest = Offset(markOnScreen.dx, markOnScreen.dy - padOffset);
 

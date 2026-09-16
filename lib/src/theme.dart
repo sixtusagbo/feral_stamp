@@ -76,7 +76,7 @@ class Type {
 
   static const wheel = TextStyle(
     fontFamily: _family,
-    fontSize: 25,
+    fontSize: 23,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
     color: Tone.text,
