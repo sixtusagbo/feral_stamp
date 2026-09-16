@@ -226,6 +226,12 @@ class _StampPageState extends State<StampPage>
       ..setEntry(3, 2, 0.0016)
       ..rotateX(-angle);
 
+    // The top face reads as tipped back, but less than the page: at the full
+    // camera angle it squashes into a sliver.
+    final faceTilt = Matrix4.identity()
+      ..setEntry(3, 2, 0.0010)
+      ..rotateX(-angle * 0.62);
+
     // The rubber rebounds off the paper, then the head accelerates away.
     final bounce =
         Curves.easeOutCubic.transform((_lift.value * 3).clamp(0.0, 1.0)) *
@@ -241,7 +247,7 @@ class _StampPageState extends State<StampPage>
     // Its resting spot is derived by pushing the mark's position on the page
     // through the same camera, so the two stay aligned at any tilt angle.
     const markOnPage = Offset(115, 176);
-    const padOffset = 155.0;
+    const padOffset = 132.0;
     final markOnScreen = MatrixUtils.transformPoint(camera3d, markOnPage);
     final rest = Offset(markOnScreen.dx, markOnScreen.dy - padOffset);
 
@@ -295,7 +301,7 @@ class _StampPageState extends State<StampPage>
                     color: _color,
                     interactive: _stage == Stage.picking,
                     solid: t > 0.04,
-                    faceTilt: camera3d,
+                    faceTilt: faceTilt,
                     onDateChanged: (d) => setState(() => _date = d),
                   ),
                 ),

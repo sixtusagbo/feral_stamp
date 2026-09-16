@@ -44,11 +44,17 @@ class StampHead extends StatelessWidget {
   /// The camera's rotation, applied to the top face only. Null means flat.
   final Matrix4? faceTilt;
 
-  static const width = 300.0;
-  static const _radius = 30.0;
-  static const _bodyHeight = 96.0;
-  static const _padHeight = 17.0;
-  static const _padInset = 13.0;
+  static const width = 272.0;
+  static const _radius = 28.0;
+
+  /// The body's bottom corners. Large, so the silhouette turns under rather
+  /// than ending in a shoulder.
+  static const _heel = 44.0;
+  static const _bodyHeight = 64.0;
+
+  /// How far the rubber pad shows beneath the body.
+  static const _padReveal = 11.0;
+  static const _padInset = 16.0;
 
   void _emit({int? day, int? month, int? year}) {
     final y = year ?? date.year;
@@ -64,64 +70,43 @@ class StampHead extends StatelessWidget {
       bottom: Radius.circular(solid ? 0 : _radius),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    final face = Transform(
+      alignment: Alignment.bottomCenter,
+      transform: faceTilt ?? Matrix4.identity(),
+      child: Container(
+        width: width,
+        decoration: BoxDecoration(
+          borderRadius: faceRadius,
+          boxShadow: [
+            if (!solid)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 28,
+                spreadRadius: -6,
+                offset: const Offset(0, 12),
+              ),
+          ],
+        ),
+        child: ClipRRect(borderRadius: faceRadius, child: _face()),
+      ),
+    );
+
+    if (!solid) return face;
+
+    // The pad sits under the body and peeks out beneath its curved heel, so
+    // the block reads as a rounded mass resting on a thinner rubber base.
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      clipBehavior: Clip.none,
       children: [
-        // Hinged along its bottom edge so it stays attached to the body as it
-        // tips back.
-        Transform(
-          alignment: Alignment.bottomCenter,
-          transform: faceTilt ?? Matrix4.identity(),
-          child: Container(
-            width: width,
-            decoration: BoxDecoration(
-              borderRadius: faceRadius,
-              boxShadow: [
-                if (!solid)
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 28,
-                    spreadRadius: -6,
-                    offset: const Offset(0, 12),
-                  ),
-              ],
-            ),
-            child: ClipRRect(borderRadius: faceRadius, child: _face()),
+        Positioned(bottom: 0, child: _pad()),
+        Padding(
+          padding: const EdgeInsets.only(bottom: _padReveal),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [face, _body()],
           ),
         ),
-        if (solid) ...[
-          Container(
-            width: width,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(_radius + 6),
-              ),
-              boxShadow: [
-                // Contact shadow: tight and dark near the pad, so the block
-                // rests on the paper rather than floating over it.
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.30),
-                  blurRadius: 28,
-                  spreadRadius: -6,
-                  offset: const Offset(0, 20),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 60,
-                  spreadRadius: -4,
-                  offset: const Offset(0, 36),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(_radius + 6),
-              ),
-              child: _body(),
-            ),
-          ),
-          _pad(),
-        ],
       ],
     );
   }
@@ -129,12 +114,12 @@ class StampHead extends StatelessWidget {
   // The lit top of the block, carrying the wheels.
   Widget _face() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(17, 14, 17, 13),
+      padding: const EdgeInsets.fromLTRB(16, 13, 16, 12),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFF1F1F4), Color(0xFFF7F7F9)],
+          colors: [Color(0xFFF4F4F7), Color(0xFFFAFAFC)],
         ),
       ),
       child: Column(
@@ -159,7 +144,7 @@ class StampHead extends StatelessWidget {
                 values: Wheels.days,
                 index: date.day - 1,
                 axisLabel: 'DAY',
-                width: 62,
+                width: 54,
                 enabled: interactive,
                 onChanged: (i) => _emit(day: i + 1),
               ),
@@ -167,7 +152,7 @@ class StampHead extends StatelessWidget {
                 values: Wheels.months,
                 index: date.month - 1,
                 axisLabel: 'MONTH',
-                width: 84,
+                width: 76,
                 enabled: interactive,
                 onChanged: (i) => _emit(month: i + 1),
               ),
@@ -175,7 +160,7 @@ class StampHead extends StatelessWidget {
                 values: Wheels.years,
                 index: date.year - 2021,
                 axisLabel: 'YEAR',
-                width: 84,
+                width: 76,
                 enabled: interactive,
                 onChanged: (i) => _emit(year: 2021 + i),
               ),
@@ -188,54 +173,80 @@ class StampHead extends StatelessWidget {
 
   /// The blank mass of the stamp. A horizontal highlight down the middle with
   /// the sides falling off is what makes it read as round rather than as a
-  /// flat panel.
+  /// flat panel, and the heel darkens so the body visibly turns under.
   Widget _body() {
+    const radius = BorderRadius.vertical(bottom: Radius.circular(_heel));
     return Container(
+      width: width,
       height: _bodyHeight,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFDCDCE2),
-            Color(0xFFF4F4F7),
-            Color(0xFFFFFFFF),
-            Color(0xFFFDFDFE),
-            Color(0xFFE9E9EE),
-            Color(0xFFD6D6DD),
-          ],
-          stops: [0.0, 0.14, 0.38, 0.58, 0.86, 1.0],
-        ),
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          // Contact shadow: tight and dark so the block rests on the paper.
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 26,
+            spreadRadius: -8,
+            offset: const Offset(0, 22),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 60,
+            spreadRadius: -4,
+            offset: const Offset(0, 40),
+          ),
+        ],
       ),
-      // Darkens towards the pad so the body turns under rather than ending.
-      child: const DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0x00000000), Color(0x00000000), Color(0x1A000000)],
-            stops: [0.0, 0.55, 1.0],
+      child: ClipRRect(
+        borderRadius: radius,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFD9D9E0),
+                Color(0xFFF3F3F6),
+                Color(0xFFFFFFFF),
+                Color(0xFFFDFDFE),
+                Color(0xFFE8E8ED),
+                Color(0xFFD3D3DB),
+              ],
+              stops: [0.0, 0.14, 0.40, 0.60, 0.86, 1.0],
+            ),
+          ),
+          child: const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0x22000000),
+                ],
+                stops: [0.0, 0.62, 1.0],
+              ),
+            ),
+            child: SizedBox.expand(),
           ),
         ),
-        child: SizedBox.expand(),
       ),
     );
   }
 
-  /// The rubber that meets the paper. Inset from the body's width so the block
-  /// appears to wrap over it, and lit along its top edge.
+  /// The rubber that meets the paper. Narrower than the body and sharing its
+  /// heel radius, so what shows is a thin dark band following the curve.
   Widget _pad() {
     return Container(
       width: width - _padInset * 2,
-      height: _padHeight,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      height: _bodyHeight * 0.6 + _padReveal,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF3A3A45), Color(0xFF15151B)],
+          colors: [Color(0xFF3B3B46), Color(0xFF1B1B22), Color(0xFF0E0E13)],
+          stops: [0.0, 0.7, 1.0],
         ),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(3),
-          bottom: Radius.circular(11),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(_heel - 6)),
       ),
     );
   }
