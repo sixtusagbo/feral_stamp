@@ -50,8 +50,6 @@ class _StampPageState extends State<StampPage>
         if (s == AnimationStatus.completed) setState(() {});
       });
 
-  final _keys = FocusNode();
-
   DateTime _date = DateTime(2026, 9, 15);
   StampLabel _label = StampLabel.paid;
   Color _color = Tone.stamp;
@@ -114,8 +112,24 @@ class _StampPageState extends State<StampPage>
   }
 
   @override
+  void initState() {
+    super.initState();
+    // A global handler rather than a focus node: tapping a chip or a swatch
+    // must not quietly kill the Enter shortcut.
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  bool _onKey(KeyEvent e) {
+    if (e is! KeyDownEvent) return false;
+    if (e.logicalKey != LogicalKeyboardKey.enter) return false;
+    if (_stage != Stage.picking) return false;
+    _stamp();
+    return true;
+  }
+
+  @override
   void dispose() {
-    _keys.dispose();
+    HardwareKeyboard.instance.removeHandler(_onKey);
     _c.dispose();
     super.dispose();
   }
@@ -124,31 +138,20 @@ class _StampPageState extends State<StampPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Tone.page,
-      body: KeyboardListener(
-        focusNode: _keys,
-        autofocus: true,
-        onKeyEvent: (e) {
-          if (e is KeyDownEvent &&
-              e.logicalKey == LogicalKeyboardKey.enter &&
-              _stage == Stage.picking) {
-            _stamp();
-          }
-        },
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: AnimatedBuilder(
-                animation: _c,
-                builder: (context, _) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _header(),
-                    const SizedBox(height: 10),
-                    _scene(),
-                    const SizedBox(height: 18),
-                    _controls(),
-                  ],
-                ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: AnimatedBuilder(
+              animation: _c,
+              builder: (context, _) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _header(),
+                  const SizedBox(height: 10),
+                  _scene(),
+                  const SizedBox(height: 18),
+                  _controls(),
+                ],
               ),
             ),
           ),
