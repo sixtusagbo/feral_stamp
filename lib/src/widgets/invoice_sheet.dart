@@ -9,13 +9,13 @@ import 'stamp_mark.dart';
 class InvoiceSheet extends StatelessWidget {
   const InvoiceSheet({
     super.key,
-    required this.label,
+    required this.headText,
     required this.date,
     required this.color,
     this.bleed = 0,
   });
 
-  final StampLabel label;
+  final String headText;
   final DateTime date;
   final Color color;
   final double bleed;
@@ -29,10 +29,7 @@ class InvoiceSheet extends StatelessWidget {
       width: width,
       height: height,
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
-      decoration: BoxDecoration(
-        color: Ink.paper,
-        boxShadow: paperShadow(1),
-      ),
+      decoration: BoxDecoration(color: Tone.paper, boxShadow: paperShadow(1)),
       child: Stack(
         children: [
           Column(
@@ -48,14 +45,14 @@ class InvoiceSheet extends StatelessWidget {
                       fontFamily: 'Helvetica Neue',
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: Ink.text,
+                      color: Tone.text,
                     ),
                   ),
                   Container(
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Ink.text,
+                      color: Tone.text,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -102,14 +99,20 @@ class InvoiceSheet extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text('Total amount due:  ', style: _micro),
+                  const Flexible(
+                    child: Text(
+                      'Total amount due:  ',
+                      style: _micro,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const Text(
                     Invoice.total,
                     style: TextStyle(
                       fontFamily: 'Helvetica Neue',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Ink.text,
+                      color: Tone.text,
                     ),
                   ),
                 ],
@@ -128,8 +131,21 @@ class InvoiceSheet extends StatelessWidget {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Thank you for your business.', style: _micro),
-                  Text(Invoice.web, style: _micro),
+                  Flexible(
+                    child: Text(
+                      'Thank you for your business.',
+                      style: _micro,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      Invoice.web,
+                      style: _micro,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -139,7 +155,7 @@ class InvoiceSheet extends StatelessWidget {
             left: 26,
             bottom: 74,
             child: StampMark(
-              label: label.head,
+              label: headText,
               date: date.stampLine,
               color: color,
               bleed: bleed,
@@ -154,7 +170,7 @@ class InvoiceSheet extends StatelessWidget {
 const _micro = TextStyle(
   fontFamily: 'Helvetica Neue',
   fontSize: 7.5,
-  color: Ink.muted,
+  color: Tone.muted,
   height: 1.5,
 );
 
@@ -162,7 +178,7 @@ const _heading = TextStyle(
   fontFamily: 'Helvetica Neue',
   fontSize: 8.5,
   fontWeight: FontWeight.w600,
-  color: Ink.text,
+  color: Tone.text,
 );
 
 class _Field extends StatelessWidget {
@@ -182,7 +198,7 @@ class _Field extends StatelessWidget {
             TextSpan(text: '$label: '),
             TextSpan(
               text: value,
-              style: const TextStyle(color: Ink.text),
+              style: const TextStyle(color: Tone.text),
             ),
           ],
         ),
@@ -202,16 +218,32 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Expanded(flex: 4, child: Text(item.description, style: _micro)),
-          Expanded(child: Text(item.quantity, style: _micro)),
-          Expanded(flex: 2, child: Text(item.unitPrice, style: _micro)),
+          Expanded(
+            flex: 4,
+            child: Text(
+              item.description,
+              style: _micro,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              item.quantity,
+              style: _micro,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           Expanded(
             flex: 2,
             child: Text(
-              item.total,
-              textAlign: TextAlign.right,
+              item.unitPrice,
               style: _micro,
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(item.total, textAlign: TextAlign.right, style: _micro),
           ),
         ],
       ),
@@ -224,5 +256,5 @@ class _Rule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Container(height: 1, color: Ink.hairline);
+      Container(height: 1, color: Tone.hairline);
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
-
 /// The red impression left on the paper: a double-ruled rounded box with the
 /// label above the date, rotated a touch so it reads as hand-pressed.
 ///

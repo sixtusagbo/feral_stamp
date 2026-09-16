@@ -97,12 +97,8 @@ class _DateWheelState extends State<DateWheel> {
                 onSelectedItemChanged: widget.onChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
                   childCount: widget.values.length,
-                  builder: (context, i) => Center(
-                    child: Text(
-                      widget.values[i],
-                      style: Type.wheel,
-                    ),
-                  ),
+                  builder: (context, i) =>
+                      Center(child: Text(widget.values[i], style: Type.wheel)),
                 ),
               ),
               // Feather the top and bottom so values roll out of view.
@@ -114,10 +110,10 @@ class _DateWheelState extends State<DateWheel> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Ink.card,
-                          Ink.card.withValues(alpha: 0),
-                          Ink.card.withValues(alpha: 0),
-                          Ink.card,
+                          Tone.card,
+                          Tone.card.withValues(alpha: 0),
+                          Tone.card.withValues(alpha: 0),
+                          Tone.card,
                         ],
                         stops: const [0.0, 0.26, 0.74, 1.0],
                       ),

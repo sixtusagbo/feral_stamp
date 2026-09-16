@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'theme.dart';
-
 /// The label rolled onto the stamp head. Mirrors the reference's chip row.
 enum StampLabel {
   paid('Paid', 'PAID'),
@@ -59,18 +57,43 @@ class Invoice {
 }
 
 const _months = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ];
 
 const _monthsLong = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const _weekdays = [
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-  'Friday', 'Saturday', 'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ];
 
 /// The three wheels: days 1-31, JAN-DEC, 2021-2031.
@@ -102,10 +125,10 @@ int daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
 
 /// A tiny helper for the paper's drop shadow, reused by sheet and stamp.
 List<BoxShadow> paperShadow(double lift) => [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.13 * lift),
-        blurRadius: 34 * lift,
-        spreadRadius: -6,
-        offset: Offset(0, 20 * lift),
-      ),
-    ];
+  BoxShadow(
+    color: Colors.black.withValues(alpha: 0.13 * lift),
+    blurRadius: 34 * lift,
+    spreadRadius: -6,
+    offset: Offset(0, 20 * lift),
+  ),
+];

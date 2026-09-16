@@ -11,7 +11,7 @@ class StampHead extends StatelessWidget {
   const StampHead({
     super.key,
     required this.date,
-    required this.label,
+    required this.headText,
     required this.color,
     required this.onDateChanged,
     this.interactive = true,
@@ -19,7 +19,9 @@ class StampHead extends StatelessWidget {
   });
 
   final DateTime date;
-  final StampLabel label;
+
+  /// Caps printed on the head; 'VOID' replaces the label when voiding.
+  final String headText;
   final Color color;
   final ValueChanged<DateTime> onDateChanged;
 
@@ -47,9 +49,9 @@ class StampHead extends StatelessWidget {
           width: width,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
           decoration: BoxDecoration(
-            color: Ink.card,
+            color: Tone.card,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Ink.cardEdge),
+            border: Border.all(color: Tone.cardEdge),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.07),
@@ -63,7 +65,7 @@ class StampHead extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(label.head, style: Type.eyebrow),
+                  Text(headText, style: Type.eyebrow),
                   const Spacer(),
                   Container(
                     width: 8,
@@ -114,10 +116,8 @@ class StampHead extends StatelessWidget {
             width: width - 26,
             height: 13,
             decoration: const BoxDecoration(
-              color: Ink.cardUnder,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(9),
-              ),
+              color: Tone.cardUnder,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(9)),
             ),
           ),
       ],

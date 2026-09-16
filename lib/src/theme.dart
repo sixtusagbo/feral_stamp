@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Design tokens lifted from the FeralUI Stamp reference.
-class Ink {
-  const Ink._();
+class Tone {
+  const Tone._();
 
   /// The stamp impression colour, sampled from the reference (`rgb(216,52,43)`).
   static const stamp = Color(0xFFD8342B);
@@ -49,7 +49,7 @@ class Type {
     fontSize: 26,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.6,
-    color: Ink.text,
+    color: Tone.text,
     height: 1.15,
   );
 
@@ -58,13 +58,13 @@ class Type {
     fontSize: 10,
     fontWeight: FontWeight.w600,
     letterSpacing: 1.1,
-    color: Ink.muted,
+    color: Tone.muted,
   );
 
   static const body = TextStyle(
     fontFamily: _family,
     fontSize: 13,
-    color: Ink.muted,
+    color: Tone.muted,
     height: 1.45,
   );
 
@@ -73,7 +73,7 @@ class Type {
     fontSize: 21,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
-    color: Ink.text,
+    color: Tone.text,
   );
 
   static const axis = TextStyle(
@@ -81,6 +81,6 @@ class Type {
     fontSize: 9,
     fontWeight: FontWeight.w600,
     letterSpacing: 1.4,
-    color: Ink.muted,
+    color: Tone.muted,
   );
 }
