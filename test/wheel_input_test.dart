@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:feral_stamp/main.dart';
+import 'package:feral_stamp/src/stamp_sound.dart';
 
 /// The wheels are the whole point of the component, and on web and desktop the
 /// only way anyone reaches them is with a cursor. Flutter excludes mouse and
@@ -19,7 +20,7 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(const FeralStampApp());
+      await tester.pumpWidget(FeralStampApp(sound: StampSound.silent()));
       expect(find.textContaining('15 September 2026'), findsOneWidget);
 
       await tester.drag(

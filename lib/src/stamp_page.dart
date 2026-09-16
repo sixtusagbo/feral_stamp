@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'invoice.dart';
+import 'stamp_sound.dart';
 import 'theme.dart';
 import 'widgets/invoice_sheet.dart';
 import 'widgets/stamp_cube.dart';
@@ -35,7 +36,10 @@ class _T {
 }
 
 class StampPage extends StatefulWidget {
-  const StampPage({super.key});
+  const StampPage({super.key, this.sound});
+
+  /// Defaults to the real thud. Tests pass [StampSound.silent].
+  final StampSound? sound;
 
   @override
   State<StampPage> createState() => _StampPageState();
@@ -56,6 +60,10 @@ class _StampPageState extends State<StampPage>
   Color _color = Tone.stamp;
   bool _voided = false;
   bool _confirmed = false;
+
+  late final StampSound _sound = widget.sound ?? StampSound();
+  int _stamps = 0;
+  bool _thudded = false;
 
   Animation<double> _phase(int start, int len, Curve curve) =>
       CurvedAnimation(parent: _c, curve: _T.span(start, len, curve));
@@ -100,7 +108,11 @@ class _StampPageState extends State<StampPage>
 
   void _stamp({bool voided = false}) {
     if (_stage != Stage.picking) return;
-    setState(() => _voided = voided);
+    setState(() {
+      _voided = voided;
+      _stamps++;
+      _thudded = false;
+    });
     _c.forward();
   }
 
@@ -119,6 +131,15 @@ class _StampPageState extends State<StampPage>
     // must not quietly kill the Enter shortcut.
     HardwareKeyboard.instance.addHandler(_onKey);
 
+    // The thud fires when the rubber meets the paper, which is the end of the
+    // press phase, not the moment the button was pressed.
+    _c.addListener(() {
+      if (_thudded || _c.status != AnimationStatus.forward) return;
+      if (_c.value < _T.liftAt / _T.total) return;
+      _thudded = true;
+      _sound.thud(_stamps);
+    });
+
     // Debug affordance: ?t=0.46 parks the timeline at that point so a frame
     // can be inspected in a real browser without driving the press.
     final park = double.tryParse(Uri.base.queryParameters['t'] ?? '');
@@ -136,6 +157,7 @@ class _StampPageState extends State<StampPage>
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
+    _sound.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -157,6 +179,8 @@ class _StampPageState extends State<StampPage>
                   _scene(),
                   const SizedBox(height: 18),
                   _controls(),
+                  const SizedBox(height: 26),
+                  _soundControls(),
                 ],
               ),
             ),
@@ -420,6 +444,50 @@ class _StampPageState extends State<StampPage>
             color: Tone.muted,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _soundControls() {
+    Widget tray(List<Widget> chips) => Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Tone.chipTray,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: chips),
+    );
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 10,
+      children: [
+        tray([
+          for (final (mode, text) in const [
+            (SoundMode.every, 'Every stamp'),
+            (SoundMode.first, 'First stamp'),
+            (SoundMode.never, 'Never'),
+          ])
+            _Chip(
+              text: text,
+              selected: _sound.mode == mode,
+              onTap: () => setState(() => _sound.mode = mode),
+            ),
+        ]),
+        tray([
+          _Chip(
+            text: 'Sound',
+            selected: !_sound.muted,
+            onTap: () => setState(() => _sound.muted = false),
+          ),
+          _Chip(
+            text: 'Muted',
+            selected: _sound.muted,
+            onTap: () => setState(() => _sound.muted = true),
+          ),
+        ]),
       ],
     );
   }

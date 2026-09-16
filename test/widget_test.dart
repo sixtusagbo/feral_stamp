@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:feral_stamp/main.dart';
+import 'package:feral_stamp/src/stamp_sound.dart';
 import 'package:feral_stamp/src/invoice.dart';
 import 'package:feral_stamp/src/stamp_page.dart';
 
@@ -13,7 +14,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const FeralStampApp());
+    await tester.pumpWidget(FeralStampApp(sound: StampSound.silent()));
 
     // The picker is up; nothing is stamped yet.
     expect(find.text('Mark as paid'), findsOneWidget);
@@ -40,7 +41,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const FeralStampApp());
+    await tester.pumpWidget(FeralStampApp(sound: StampSound.silent()));
     await tester.longPress(find.text('Mark as paid'));
     await tester.pumpAndSettle();
 
@@ -67,7 +68,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const FeralStampApp());
+    await tester.pumpWidget(FeralStampApp(sound: StampSound.silent()));
     await tester.tap(find.text('Mark as paid'));
     await tester.pump();
     // Part way through the 800ms camera tilt.

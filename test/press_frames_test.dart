@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:feral_stamp/main.dart';
+import 'package:feral_stamp/src/stamp_sound.dart';
 
 /// Renders the press at fixed points on the timeline.
 ///
@@ -22,7 +23,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const FeralStampApp());
+    await tester.pumpWidget(FeralStampApp(sound: StampSound.silent()));
     await tester.tap(find.text('Mark as paid'));
     await tester.pump();
 

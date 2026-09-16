@@ -116,7 +116,7 @@ class _DateWheelState extends State<DateWheel> {
                   bottom: top ? null : 0,
                   left: 0,
                   right: 0,
-                  height: widget.rowHeight * 1.2,
+                  height: widget.rowHeight - 1,
                   child: IgnorePointer(
                     child: ClipRect(
                       child: BackdropFilter(

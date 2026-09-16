@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'src/stamp_page.dart';
+import 'src/stamp_sound.dart';
 import 'src/theme.dart';
 
 void main() {
@@ -14,7 +15,10 @@ void main() {
 }
 
 class FeralStampApp extends StatelessWidget {
-  const FeralStampApp({super.key});
+  const FeralStampApp({super.key, this.sound});
+
+  /// Passed through to the page; tests hand in [StampSound.silent].
+  final StampSound? sound;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +33,7 @@ class FeralStampApp extends StatelessWidget {
       // on web and desktop a cursor cannot roll the wheels at all. This is a
       // component you drag, so they have to be in.
       scrollBehavior: const _DragWithAnything(),
-      home: const StampPage(),
+      home: StampPage(sound: sound),
     );
   }
 }
