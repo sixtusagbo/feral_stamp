@@ -24,7 +24,7 @@ class InvoiceSheet extends StatelessWidget {
 
   /// Nominal height. The paper grows if a larger text scale needs the room,
   /// so the layout never hard-fails on an unexpected font.
-  static const height = 510.0;
+  static const height = 408.0;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,12 @@ class InvoiceSheet extends StatelessWidget {
           const _Rule(),
           const SizedBox(height: 8),
           const Text('Description of services', style: _heading),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
+          const _Row(
+            LineItem('Description', 'Quantity', 'Unit price', 'Total'),
+            faint: true,
+          ),
+          const SizedBox(height: 2),
           for (final item in Invoice.items) _Row(item),
           const SizedBox(height: 6),
           const _Rule(),
@@ -223,12 +228,18 @@ class _Field extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row(this.item);
+  const _Row(this.item, {this.faint = false});
 
   final LineItem item;
 
+  /// The column headings are set lighter than the rows beneath them.
+  final bool faint;
+
   @override
   Widget build(BuildContext context) {
+    final style = faint
+        ? _micro.copyWith(color: const Color(0xFFBFBFC6))
+        : _micro;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -237,14 +248,14 @@ class _Row extends StatelessWidget {
             flex: 4,
             child: Text(
               item.description,
-              style: _micro,
+              style: style,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Expanded(
             child: Text(
               item.quantity,
-              style: _micro,
+              style: style,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -252,7 +263,7 @@ class _Row extends StatelessWidget {
             flex: 2,
             child: Text(
               item.unitPrice,
-              style: _micro,
+              style: style,
               overflow: TextOverflow.ellipsis,
             ),
           ),
