@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -5,8 +7,9 @@ import '../theme.dart';
 /// One scrollable column of the stamp's date roller.
 ///
 /// Five rows are visible. The centre row sits in a grey pill and is the
-/// selected value; the rest fall away in opacity and size so the column reads
-/// as a physical wheel rather than a list.
+/// selected value. The rows either side of it are crisp; the outermost pair
+/// are blurred and faded, which is what sells the column as a wheel rolling
+/// out of focus rather than a list being clipped.
 class DateWheel extends StatefulWidget {
   const DateWheel({
     super.key,
@@ -76,12 +79,14 @@ class _DateWheelState extends State<DateWheel> {
           child: Stack(
             children: [
               // The selection pill sits behind the numbers.
+              // The pill stands a little taller than a row, as in the
+              // reference, so it reads as a slot the value sits in.
               Center(
                 child: Container(
-                  height: widget.rowHeight - 2,
+                  height: widget.rowHeight + 3,
                   decoration: BoxDecoration(
                     color: Tone.wheelPill,
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -91,10 +96,12 @@ class _DateWheelState extends State<DateWheel> {
                 physics: widget.enabled
                     ? const FixedExtentScrollPhysics()
                     : const NeverScrollableScrollPhysics(),
-                diameterRatio: 1.5,
-                perspective: 0.004,
-                squeeze: 1.06,
-                overAndUnderCenterOpacity: 0.28,
+                // Nearly flat: the neighbours of the selected row are full
+                // size and full strength in the reference.
+                diameterRatio: 3.0,
+                perspective: 0.001,
+                squeeze: 1.0,
+                overAndUnderCenterOpacity: 1.0,
                 onSelectedItemChanged: widget.onChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
                   childCount: widget.values.length,
@@ -102,6 +109,23 @@ class _DateWheelState extends State<DateWheel> {
                       Center(child: Text(widget.values[i], style: Type.wheel)),
                 ),
               ),
+              // The outermost rows are out of focus.
+              for (final top in [true, false])
+                Positioned(
+                  top: top ? 0 : null,
+                  bottom: top ? null : 0,
+                  left: 0,
+                  right: 0,
+                  height: widget.rowHeight * 1.2,
+                  child: IgnorePointer(
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+                  ),
+                ),
               // Feather the ends so values roll out of view rather than
               // stopping dead at the edge of the face.
               Positioned.fill(
@@ -112,14 +136,14 @@ class _DateWheelState extends State<DateWheel> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.fade,
-                          widget.fade.withValues(alpha: 0.55),
+                          widget.fade.withValues(alpha: 0.85),
+                          widget.fade.withValues(alpha: 0.45),
                           widget.fade.withValues(alpha: 0),
                           widget.fade.withValues(alpha: 0),
-                          widget.fade.withValues(alpha: 0.55),
-                          widget.fade,
+                          widget.fade.withValues(alpha: 0.45),
+                          widget.fade.withValues(alpha: 0.85),
                         ],
-                        stops: const [0.0, 0.14, 0.30, 0.70, 0.86, 1.0],
+                        stops: const [0.0, 0.16, 0.26, 0.74, 0.84, 1.0],
                       ),
                     ),
                   ),

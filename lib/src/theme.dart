@@ -18,7 +18,7 @@ class Tone {
   static const hairline = Color(0xFFE6E6E9);
 
   /// The grey slab behind the selected row of each wheel.
-  static const wheelPill = Color(0xFFE9E9EC);
+  static const wheelPill = Color(0xFFE5E5E9);
 
   /// The tray the label chips sit in.
   static const chipTray = Color(0xFFECECEF);

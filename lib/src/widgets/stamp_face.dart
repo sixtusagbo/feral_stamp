@@ -32,7 +32,7 @@ class StampFace extends StatelessWidget {
   final bool interactive;
 
   static const _rowHeight = 18.0;
-  static const _fontSize = 15.0;
+  static const _fontSize = 14.0;
 
   void _emit({int? day, int? month, int? year}) {
     final y = year ?? date.year;
@@ -70,7 +70,7 @@ class StampFace extends StatelessWidget {
                 values: Wheels.days,
                 index: date.day - 1,
                 axisLabel: 'DAY',
-                width: 44,
+                width: 50,
                 rowHeight: _rowHeight,
                 fontSize: _fontSize,
                 fade: background,

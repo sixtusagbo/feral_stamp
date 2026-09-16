@@ -301,7 +301,7 @@ class _StampPageState extends State<StampPage>
                     rest: 1 - t,
                     width: 224,
                     depth: 132,
-                    height: 96,
+                    height: 124,
                     face: StampFace(
                       date: _date,
                       headText: _headLabel,
