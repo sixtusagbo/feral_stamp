@@ -1,0 +1,228 @@
+import 'package:flutter/material.dart';
+
+import '../invoice.dart';
+import '../theme.dart';
+import 'stamp_mark.dart';
+
+/// The page that gets stamped. Laid out at a fixed size so the mark can be
+/// positioned against the paper rather than against the viewport.
+class InvoiceSheet extends StatelessWidget {
+  const InvoiceSheet({
+    super.key,
+    required this.label,
+    required this.date,
+    required this.color,
+    this.bleed = 0,
+  });
+
+  final StampLabel label;
+  final DateTime date;
+  final Color color;
+  final double bleed;
+
+  static const width = 320.0;
+  static const height = 430.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+      decoration: BoxDecoration(
+        color: Ink.paper,
+        boxShadow: paperShadow(1),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Invoice',
+                    style: TextStyle(
+                      fontFamily: 'Helvetica Neue',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Ink.text,
+                    ),
+                  ),
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Ink.text,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+              const Text(Invoice.studio, style: _micro),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Field('ABN', Invoice.abn),
+                        _Field('Email', Invoice.email),
+                        _Field('Web', Invoice.web),
+                        _Field('Address', Invoice.address),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _Field('Invoice to', Invoice.billTo),
+                        const _Field('Invoice ID', Invoice.id),
+                        const _Field('Date of issue', Invoice.issued),
+                        const _Field('Payment due', Invoice.due),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const _Rule(),
+              const SizedBox(height: 8),
+              const Text('Description of services', style: _heading),
+              const SizedBox(height: 6),
+              for (final item in Invoice.items) _Row(item),
+              const SizedBox(height: 6),
+              const _Rule(),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text('Total amount due:  ', style: _micro),
+                  const Text(
+                    Invoice.total,
+                    style: TextStyle(
+                      fontFamily: 'Helvetica Neue',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Ink.text,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Text('Bank details for payment:', style: _heading),
+              const SizedBox(height: 3),
+              const Text(
+                'Bank: ${Invoice.bank}\n'
+                'BSB: ${Invoice.bsb}\n'
+                'Account number: ${Invoice.account}\n'
+                'Name: ${Invoice.studio}',
+                style: _micro,
+              ),
+              const SizedBox(height: 10),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Thank you for your business.', style: _micro),
+                  Text(Invoice.web, style: _micro),
+                ],
+              ),
+            ],
+          ),
+          // The mark lands over the bank block, as in the reference.
+          Positioned(
+            left: 26,
+            bottom: 74,
+            child: StampMark(
+              label: label.head,
+              date: date.stampLine,
+              color: color,
+              bleed: bleed,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+const _micro = TextStyle(
+  fontFamily: 'Helvetica Neue',
+  fontSize: 7.5,
+  color: Ink.muted,
+  height: 1.5,
+);
+
+const _heading = TextStyle(
+  fontFamily: 'Helvetica Neue',
+  fontSize: 8.5,
+  fontWeight: FontWeight.w600,
+  color: Ink.text,
+);
+
+class _Field extends StatelessWidget {
+  const _Field(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 1.5),
+      child: RichText(
+        text: TextSpan(
+          style: _micro,
+          children: [
+            TextSpan(text: '$label: '),
+            TextSpan(
+              text: value,
+              style: const TextStyle(color: Ink.text),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row(this.item);
+
+  final LineItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(flex: 4, child: Text(item.description, style: _micro)),
+          Expanded(child: Text(item.quantity, style: _micro)),
+          Expanded(flex: 2, child: Text(item.unitPrice, style: _micro)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              item.total,
+              textAlign: TextAlign.right,
+              style: _micro,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Rule extends StatelessWidget {
+  const _Rule();
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(height: 1, color: Ink.hairline);
+}
