@@ -222,38 +222,36 @@ class _StampPageState extends State<StampPage>
     final camera = (t - _rise.value).clamp(0.0, 1.0);
     final angle = camera * 0.66;
 
-    // The head sits well above the page and comes down onto it. Most of that
-    // travel is explicit vertical motion; Z only supplies a slight change of
-    // scale. Driving the descent from Z instead magnifies the head to ~1.4x
-    // while it hovers, which swamps the page.
-    const hoverLift = 168.0;
-    const hoverZ = 52.0;
-    // The rubber rebounds quickly off the paper, then the head accelerates
-    // away. An ease-out on the exit makes it leap off in the first frames,
-    // which reads as a cut rather than a lift.
+    final camera3d = Matrix4.identity()
+      ..setEntry(3, 2, 0.0016)
+      ..rotateX(-angle);
+
+    // The rubber rebounds off the paper, then the head accelerates away.
     final bounce =
         Curves.easeOutCubic.transform((_lift.value * 3).clamp(0.0, 1.0)) *
         Beat.bounce;
     final settle = (1 - _press.value) + bounce;
-
-    // Leaving is a screen-space rise with a slight scale-up, applied outside
-    // the perspective transform. Pushing the exit through the 3D matrix works
-    // out to a dive at the camera: the head's own height spans a huge depth
-    // range once it is close, and the perspective divide shears it apart.
     final exit = Curves.easeInCubic.transform(_lift.value);
-    final z = -(hoverZ * t * settle);
 
-    // Where the head meets the paper. The translation moves the head's centre,
-    // but it is the rubber pad at its bottom that has to land on the mark, so
-    // the resting point sits roughly half a head above it.
-    const markY = 126.0;
-    const padOffset = 147.0;
-    final groundY = ((markY - padOffset) * t) - hoverLift * t * settle;
-    final groundX = 88.0 * t;
+    // Only the page is in the tilted plane. The head stays square to the
+    // viewer and is simply positioned over the page, which is what the
+    // reference does: rotating it too foreshortens the block into a wedge that
+    // swallows the paper.
+    //
+    // Its resting spot is derived by pushing the mark's position on the page
+    // through the same camera, so the two stay aligned at any tilt angle.
+    const markOnPage = Offset(83, 176);
+    const padOffset = 150.0;
+    final markOnScreen = MatrixUtils.transformPoint(camera3d, markOnPage);
+    final rest = Offset(markOnScreen.dx, markOnScreen.dy - padOffset);
 
-    final camera3d = Matrix4.identity()
-      ..setEntry(3, 2, 0.0016)
-      ..rotateX(-angle);
+    const hoverLift = 150.0;
+    final offset =
+        Offset.lerp(Offset.zero, rest, t)! -
+        Offset(0, hoverLift * t * settle) -
+        Offset(0, exit * 430);
+
+    final scale = (1 + 0.05 * t * settle) * (1 + 0.16 * exit);
 
     return SizedBox(
       height: lerpDouble(268, 700, t)!,
@@ -288,21 +286,16 @@ class _StampPageState extends State<StampPage>
             child: Opacity(
               opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
               child: Transform.translate(
-                offset: Offset(0, -exit * 430),
+                offset: offset,
                 child: Transform.scale(
-                  scale: 1 + 0.16 * exit,
-                  child: Transform(
-                    alignment: Alignment.center,
-                    transform: camera3d.clone()
-                      ..translateByDouble(groundX, groundY, z, 1.0),
-                    child: StampHead(
-                      date: _date,
-                      headText: _headLabel,
-                      color: _color,
-                      interactive: _stage == Stage.picking,
-                      solid: t > 0.04,
-                      onDateChanged: (d) => setState(() => _date = d),
-                    ),
+                  scale: scale,
+                  child: StampHead(
+                    date: _date,
+                    headText: _headLabel,
+                    color: _color,
+                    interactive: _stage == Stage.picking,
+                    solid: t > 0.04,
+                    onDateChanged: (d) => setState(() => _date = d),
                   ),
                 ),
               ),
