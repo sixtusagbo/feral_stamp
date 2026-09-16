@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -87,7 +89,8 @@ class _StampPageState extends State<StampPage>
     return Stage.pressing;
   }
 
-  String get _headLabel => _voided ? 'VOID' : _label.head;
+  String get _headLabel =>
+      _voided && _stage != Stage.picking ? 'VOID' : _label.head;
   Color get _inkColor => _voided ? Tone.stamp : _color;
 
   void _stamp({bool voided = false}) {
@@ -199,80 +202,72 @@ class _StampPageState extends State<StampPage>
 
   // ----------------------------------------------------------------- scene
 
-  /// Both the paper and the head live inside one perspective transform, so the
-  /// head genuinely descends *into* the scene rather than sliding over a
-  /// picture of it.
+  /// One perspective transform holds both the paper and the head, and there is
+  /// only ever *one* head: the picker tips into 3D and becomes the stamp. That
+  /// continuity is the whole trick, so it must not be faked with a crossfade
+  /// between two separate widgets.
   Widget _scene() {
-    // Tilt in, then back out as the camera rises.
-    final camera = (_tilt.value - _rise.value).clamp(0.0, 1.0);
-    final angle = camera * 0.60;
+    // Tilt in, then back out again as the camera rises at the end.
+    final t = _tilt.value;
+    final camera = (t - _rise.value).clamp(0.0, 1.0);
+    final angle = camera * 0.66;
 
-    // The head hovers, drops to the paper, then leaves upward.
-    const hover = 150.0;
+    // Hover above the page, drop onto it, rebound, then leave upward.
+    const hover = 180.0;
     final bounce = Curves.easeOut.transform(_lift.value) * Beat.bounce;
-    final z = hover * (1 - _press.value) + hover * bounce;
-    final exit = _lift.value * 520;
+    final z = hover * t * (1 - _press.value) + hover * bounce;
+    final exit = _lift.value * 620;
 
-    final sheetVisible = _tilt.value > 0.02;
+    // The head's resting spot on the page. While it floats, perspective lifts
+    // it up the screen on its own, which is what puts it over the paper.
+    final groundY = 74.0 * t;
+    final groundX = 60.0 * t;
+
+    final camera3d = Matrix4.identity()
+      ..setEntry(3, 2, 0.0016)
+      ..rotateX(angle);
 
     return SizedBox(
-      height: 470,
-      width: 360,
+      height: lerpDouble(212, 560, t)!,
+      width: 440,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0014)
-              ..rotateX(angle),
-            child: Opacity(
-              opacity: sheetVisible ? 1 : 0,
-              child: InvoiceSheet(
-                headText: _headLabel,
-                date: _date,
-                color: _inkColor,
-                bleed: _bleed.value,
-              ),
-            ),
-          ),
-          if (sheetVisible)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Center(
-                  child: Opacity(
-                    opacity: (1 - _lift.value).clamp(0.0, 1.0),
-                    child: Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.0014)
-                        ..rotateX(angle)
-                        ..translateByDouble(0.0, -120.0 - exit, z, 1.0),
-                      child: StampHead(
-                        date: _date,
-                        headText: _headLabel,
-                        color: _inkColor,
-                        interactive: false,
-                        showUnderside: true,
-                        onDateChanged: (_) {},
-                      ),
-                    ),
+          if (t > 0.01)
+            _Unclamped(
+              child: Opacity(
+                opacity: Curves.easeOut.transform(t.clamp(0.0, 1.0)),
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: camera3d,
+                  child: InvoiceSheet(
+                    headText: _headLabel,
+                    date: _date,
+                    color: _inkColor,
+                    bleed: _bleed.value,
                   ),
                 ),
               ),
             ),
-          // The flat picker, cross-faded out as the camera tilts.
-          if (_tilt.value < 0.98)
-            Opacity(
-              opacity: (1 - _tilt.value * 1.4).clamp(0.0, 1.0),
-              child: StampHead(
-                date: _date,
-                headText: _label.head,
-                color: _color,
-                interactive: _stage == Stage.picking,
-                onDateChanged: (d) => setState(() => _date = d),
+          _Unclamped(
+            child: Opacity(
+              opacity: (1 - _lift.value).clamp(0.0, 1.0),
+              child: Transform(
+                alignment: Alignment.center,
+                transform: camera3d.clone()
+                  ..translateByDouble(groundX, groundY - exit, z, 1.0),
+                child: StampHead(
+                  date: _date,
+                  headText: _headLabel,
+                  color: _color,
+                  interactive: _stage == Stage.picking,
+                  solid: t > 0.04,
+                  onDateChanged: (d) => setState(() => _date = d),
+                ),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -281,12 +276,17 @@ class _StampPageState extends State<StampPage>
   // -------------------------------------------------------------- controls
 
   Widget _controls() {
-    if (_c.isCompleted) {
-      return _confirmed ? _finalActions() : _toast();
-    }
-    return Opacity(
-      opacity: (1 - _tilt.value * 1.6).clamp(0.0, 1.0),
-      child: _picker(),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      child: Center(
+        child: _c.isCompleted
+            ? (_confirmed ? _finalActions() : _toast())
+            : Opacity(
+                opacity: (1 - _tilt.value * 1.6).clamp(0.0, 1.0),
+                child: _picker(),
+              ),
+      ),
     );
   }
 
@@ -500,4 +500,21 @@ class _Pill extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Hands its child unbounded constraints so it keeps its natural size inside a
+/// smaller animated frame.
+class _Unclamped extends StatelessWidget {
+  const _Unclamped({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => OverflowBox(
+    minWidth: 0,
+    minHeight: 0,
+    maxWidth: double.infinity,
+    maxHeight: double.infinity,
+    child: child,
+  );
 }

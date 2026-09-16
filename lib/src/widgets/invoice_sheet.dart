@@ -20,19 +20,23 @@ class InvoiceSheet extends StatelessWidget {
   final Color color;
   final double bleed;
 
-  static const width = 320.0;
-  static const height = 430.0;
+  static const width = 380.0;
+
+  /// Nominal height. The paper grows if a larger text scale needs the room,
+  /// so the layout never hard-fails on an unexpected font.
+  static const height = 510.0;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      height: height,
-      padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+      constraints: const BoxConstraints(minHeight: height),
+      padding: const EdgeInsets.fromLTRB(26, 24, 26, 18),
       decoration: BoxDecoration(color: Tone.paper, boxShadow: paperShadow(1)),
       child: Stack(
         children: [
           Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -117,7 +121,7 @@ class InvoiceSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 16),
               const Text('Bank details for payment:', style: _heading),
               const SizedBox(height: 3),
               const Text(
@@ -150,10 +154,10 @@ class InvoiceSheet extends StatelessWidget {
               ),
             ],
           ),
-          // The mark lands over the bank block, as in the reference.
+          // The mark lands to the right of the bank block, not on top of it.
           Positioned(
-            left: 26,
-            bottom: 74,
+            right: 14,
+            bottom: 86,
             child: StampMark(
               label: headText,
               date: date.stampLine,
