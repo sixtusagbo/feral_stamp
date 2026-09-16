@@ -53,9 +53,8 @@ class StampCube extends StatelessWidget {
 
   /// Big: the front wall turns under into the base rather than meeting it at
   /// a corner, which is most of what makes the block read as a solid.
-  static const _heelRadius = 40.0;
-  static const _edge = 12.0;
-  static const _edgeInset = 5.0;
+  static const _heelRadius = 44.0;
+  static const _edge = 11.0;
 
   Matrix4 _camera() => Matrix4.identity()
     ..setEntry(3, 2, perspective)
@@ -118,69 +117,78 @@ class StampCube extends StatelessWidget {
     );
   }
 
-  /// The front face, with a highlight down its middle so the vertical edges
-  /// read as rounded, a crease along the top where it meets the lid, and the
-  /// rubber as a dark strip along the base: the cube's bottom edge.
+  /// The front face. The rubber is the bottom strip of this same quad, and the
+  /// whole thing is clipped by the heel radius, so the strip's ends follow the
+  /// corner arc and taper as the footprint curves away: a crescent, which is
+  /// what the base of a rounded block looks like from above. Drawn as its own
+  /// bar it reads as a flat strip glued on.
   Widget _front() {
-    const radius = BorderRadius.vertical(bottom: Radius.circular(_heelRadius));
     return SizedBox(
       width: width,
       height: height,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                borderRadius: radius,
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFFCFCFD7),
-                    Color(0xFFEDEDF2),
-                    Color(0xFFFFFFFF),
-                    Color(0xFFFDFDFE),
-                    Color(0xFFE9E9EE),
-                    Color(0xFFCBCBD4),
-                  ],
-                  stops: [0.0, 0.16, 0.42, 0.58, 0.84, 1.0],
-                ),
-              ),
-              child: const DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: radius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x24000000),
-                      Color(0x06000000),
-                      Color(0x00000000),
-                      Color(0x14000000),
-                    ],
-                    stops: [0.0, 0.16, 0.66, 1.0],
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(_heelRadius),
+        ),
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFFCFCFD7),
+                          Color(0xFFEDEDF2),
+                          Color(0xFFFFFFFF),
+                          Color(0xFFFDFDFE),
+                          Color(0xFFE9E9EE),
+                          Color(0xFFCBCBD4),
+                        ],
+                        stops: [0.0, 0.16, 0.42, 0.58, 0.84, 1.0],
+                      ),
+                    ),
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0x24000000),
+                            Color(0x06000000),
+                            Color(0x00000000),
+                            Color(0x10000000),
+                          ],
+                          stops: [0.0, 0.16, 0.70, 1.0],
+                        ),
+                      ),
+                      child: SizedBox.expand(),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: _edgeInset,
-            right: _edgeInset,
-            bottom: 0,
-            height: _edge,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(_heelRadius - _edgeInset),
+                // A lit lip along the bottom of the wall, just above the rubber.
+                const SizedBox(
+                  height: 1.5,
+                  child: ColoredBox(color: Color(0xFFF7F7F9)),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF34343E), Color(0xFF14141A)],
+                const SizedBox(
+                  height: _edge,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF3A3A44), Color(0xFF15151B)],
+                      ),
+                    ),
+                    child: SizedBox.expand(),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
