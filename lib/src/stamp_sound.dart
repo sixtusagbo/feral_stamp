@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
-/// When the stamp's own sounds play. Mirrors the reference's control: on every
-/// press, on the first press only, or never. [muted] is a master switch over
-/// everything, ticks included.
+/// When the stamp's own sounds play: on every press, on the first press only,
+/// or never. [muted] is a master switch over everything, ticks included. Both
+/// are settings on the component; the demo page does not surface them.
 enum SoundMode { every, first, never }
 
 /// The four cues, all synthesised into `assets/sounds/`:

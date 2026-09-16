@@ -195,8 +195,6 @@ class _StampPageState extends State<StampPage>
                   _scene(),
                   const SizedBox(height: 18),
                   _controls(),
-                  const SizedBox(height: 26),
-                  _soundControls(),
                 ],
               ),
             ),
@@ -286,8 +284,8 @@ class _StampPageState extends State<StampPage>
     // The box is a real object on the page: it hovers above the mark along
     // the page's normal and descends onto it. Leaving is a screen-space rise
     // applied outside the camera, which is what the reference does.
-    const markOnPage = Offset(88, 150);
-    const hoverLift = 78.0;
+    const markOnPage = Offset(74, 126);
+    const hoverLift = 65.0;
     final position = Offset.lerp(Offset.zero, markOnPage, t)!;
     final lift = hoverLift * t * settle;
 
@@ -295,7 +293,7 @@ class _StampPageState extends State<StampPage>
 
     // At rest the card is bigger than the box is on the page: the camera
     // pulls back as the page comes into view. Measured off the reference.
-    final exitScale = (1 + 0.16 * exit) * lerpDouble(1.38, 1.0, t)!;
+    final exitScale = (1 + 0.16 * exit) * lerpDouble(2.0, 1.0, t)!;
 
     return SizedBox(
       height: lerpDouble(268, 700, t)!,
@@ -315,7 +313,7 @@ class _StampPageState extends State<StampPage>
                   // The sheet is designed at a readable width and scaled up so
                   // the page reads large against the head, as in the reference.
                   child: Transform.scale(
-                    scale: 1.4,
+                    scale: 1.18,
                     child: InvoiceSheet(
                       headText: _headLabel,
                       date: _date,
@@ -339,9 +337,9 @@ class _StampPageState extends State<StampPage>
                     position: position,
                     lift: lift,
                     rest: 1 - t,
-                    width: 240,
-                    depth: 150,
-                    height: 140,
+                    width: 208,
+                    depth: 128,
+                    height: 145,
                     face: StampFace(
                       date: _date,
                       headText: _headLabel,
@@ -463,50 +461,6 @@ class _StampPageState extends State<StampPage>
             color: Tone.muted,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _soundControls() {
-    Widget tray(List<Widget> chips) => Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: Tone.chipTray,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: chips),
-    );
-
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 12,
-      runSpacing: 10,
-      children: [
-        tray([
-          for (final (mode, text) in const [
-            (SoundMode.every, 'Every stamp'),
-            (SoundMode.first, 'First stamp'),
-            (SoundMode.never, 'Never'),
-          ])
-            _Chip(
-              text: text,
-              selected: _sound.mode == mode,
-              onTap: _tap(() => setState(() => _sound.mode = mode)),
-            ),
-        ]),
-        tray([
-          _Chip(
-            text: 'Sound',
-            selected: !_sound.muted,
-            onTap: _tap(() => setState(() => _sound.muted = false)),
-          ),
-          _Chip(
-            text: 'Muted',
-            selected: _sound.muted,
-            onTap: () => setState(() => _sound.muted = true),
-          ),
-        ]),
       ],
     );
   }
