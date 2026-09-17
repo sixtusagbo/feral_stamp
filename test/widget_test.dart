@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:feral_stamp/main.dart';
 import 'package:feral_stamp/src/stamp_sound.dart';
 import 'package:feral_stamp/src/invoice.dart';
-import 'package:feral_stamp/src/stamp_page.dart';
+import 'package:feral_stamp/src/widgets/stamp_scene.dart';
 
 void main() {
   testWidgets('stamping prints the date onto the invoice', (tester) async {

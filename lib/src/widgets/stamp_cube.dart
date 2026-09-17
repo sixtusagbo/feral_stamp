@@ -85,7 +85,12 @@ class StampCube extends StatelessWidget {
           Transform(
             alignment: Alignment.center,
             transform: _camera()..translateByDouble(4, 12, 0, 1),
-            child: _shadow(),
+            child: _GroundShadow(
+              lift: lift,
+              rest: rest,
+              width: width,
+              depth: depth,
+            ),
           ),
           if (angle > 0.005)
             CustomPaint(
@@ -100,42 +105,72 @@ class StampCube extends StatelessWidget {
           Transform(
             alignment: Alignment.center,
             transform: _camera()..translateByDouble(0, 0, -height, 1),
-            child: _lid(),
+            child: _Lid(rest: rest, width: width, depth: depth, child: face),
           ),
         ],
       ),
     );
   }
+}
 
-  /// The lid: a rounded rectangle on every corner, whatever the camera does.
-  /// A shade greyer than the lit wall, and lighter again at rest where there
-  /// is nothing for it to be in the shade of.
-  Widget _lid() {
+/// The lid: a rounded rectangle on every corner, whatever the camera does.
+/// A shade greyer than the lit wall, and lighter again at rest where there
+/// is nothing for it to be in the shade of.
+class _Lid extends StatelessWidget {
+  const _Lid({
+    required this.rest,
+    required this.width,
+    required this.depth,
+    this.child,
+  });
+
+  final double rest;
+  final double width;
+  final double depth;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: width,
       height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(StampCube.radius),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
             Color.lerp(const Color(0xFFEAEAEE), const Color(0xFFF9F9FA), rest)!,
-            lidTone(rest),
+            StampCube.lidTone(rest),
             Color.lerp(const Color(0xFFF5F5F7), const Color(0xFFFDFDFD), rest)!,
           ],
           stops: const [0.0, 0.6, 1.0],
         ),
       ),
-      child: face,
+      child: child,
     );
   }
+}
 
-  /// Lies flat on the page, nudged towards the viewer. Soft and light: the
-  /// reference glows off the page rather than sitting in a pool of shade. At
-  /// rest it is the card's lift; on the page it draws in a little, then
-  /// spreads and thins again as the object is raised.
-  Widget _shadow() {
+/// Lies flat on the page, nudged towards the viewer. Soft and light: the
+/// reference glows off the page rather than sitting in a pool of shade. At
+/// rest it is the card's lift; on the page it draws in a little, then
+/// spreads and thins again as the object is raised.
+class _GroundShadow extends StatelessWidget {
+  const _GroundShadow({
+    required this.lift,
+    required this.rest,
+    required this.width,
+    required this.depth,
+  });
+
+  final double lift;
+  final double rest;
+  final double width;
+  final double depth;
+
+  @override
+  Widget build(BuildContext context) {
     final t = (lift / 120).clamp(0.0, 1.0);
     final ground = 1 - rest;
     final strength = (1 - t * 0.6) * (0.55 + 0.45 * ground);
@@ -143,7 +178,7 @@ class StampCube extends StatelessWidget {
       width: width,
       height: depth,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(StampCube.radius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.13 * strength),

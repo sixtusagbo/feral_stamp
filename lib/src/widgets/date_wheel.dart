@@ -71,43 +71,6 @@ class _DateWheelState extends State<DateWheel> {
     super.dispose();
   }
 
-  /// The neighbours of the selection sit a shade lighter than it; from about
-  /// one pitch out to two, rows blur and fade on top of that.
-  Widget _row(int i) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final offset = _controller.hasClients
-            ? _controller.offset
-            : widget.index * widget.rowHeight;
-        final distance = ((i * widget.rowHeight - offset) / widget.rowHeight)
-            .abs();
-        final k = ((distance - 1.15) / 0.85).clamp(0.0, 1.0);
-        final near = distance.clamp(0.0, 1.0);
-
-        Widget row = Center(
-          child: Text(
-            widget.values[i],
-            style: GoogleFonts.inter(
-              textStyle: Type.wheel.copyWith(
-                fontSize: widget.fontSize,
-                letterSpacing: -0.01 * widget.fontSize,
-              ),
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        );
-        if (k > 0.02) {
-          row = ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 2.6 * k, sigmaY: 2.6 * k),
-            child: row,
-          );
-        }
-        return Opacity(opacity: 1 - 0.2 * near - 0.45 * k, child: row);
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -143,7 +106,14 @@ class _DateWheelState extends State<DateWheel> {
                 onSelectedItemChanged: widget.onChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
                   childCount: widget.values.length,
-                  builder: (context, i) => _row(i),
+                  builder: (context, i) => _WheelRow(
+                    controller: _controller,
+                    index: i,
+                    fallback: widget.index,
+                    rowHeight: widget.rowHeight,
+                    fontSize: widget.fontSize,
+                    value: widget.values[i],
+                  ),
                 ),
               ),
               // A thin feather at the very ends so the outermost rows roll
@@ -178,6 +148,64 @@ class _DateWheelState extends State<DateWheel> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One value on the wheel. The neighbours of the selection sit a shade lighter
+/// than it; from about one pitch out to two, rows blur and fade on top of
+/// that, continuously as the wheel turns.
+class _WheelRow extends StatelessWidget {
+  const _WheelRow({
+    required this.controller,
+    required this.index,
+    required this.fallback,
+    required this.rowHeight,
+    required this.fontSize,
+    required this.value,
+  });
+
+  final FixedExtentScrollController controller;
+  final int index;
+
+  /// The selected index before the controller has a client.
+  final int fallback;
+  final double rowHeight;
+  final double fontSize;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final offset = controller.hasClients
+            ? controller.offset
+            : fallback * rowHeight;
+        final distance = ((index * rowHeight - offset) / rowHeight).abs();
+        final k = ((distance - 1.15) / 0.85).clamp(0.0, 1.0);
+        final near = distance.clamp(0.0, 1.0);
+
+        Widget row = Center(
+          child: Text(
+            value,
+            style: GoogleFonts.inter(
+              textStyle: Type.wheel.copyWith(
+                fontSize: fontSize,
+                letterSpacing: -0.01 * fontSize,
+              ),
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        );
+        if (k > 0.02) {
+          row = ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 2.6 * k, sigmaY: 2.6 * k),
+            child: row,
+          );
+        }
+        return Opacity(opacity: 1 - 0.2 * near - 0.45 * k, child: row);
+      },
     );
   }
 }
