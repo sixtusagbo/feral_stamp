@@ -6,34 +6,16 @@ import 'package:flutter/services.dart';
 import 'invoice.dart';
 import 'stamp_sound.dart';
 import 'theme.dart';
+import 'timeline.dart';
 import 'widgets/invoice_sheet.dart';
 import 'widgets/stamp_cube.dart';
+import 'widgets/controls.dart';
 import 'widgets/stamp_face.dart';
-
-/// Where we are in the press. The whole animation is one timeline; this enum
-/// just names the regions so the UI can decide what to show.
-enum Stage { picking, pressing, stamped }
+import 'widgets/unclamped.dart';
 
 /// Identifies the perspective transform wrapping the paper, so tests can read
 /// the camera matrix instead of eyeballing a screenshot.
 const cameraKey = Key('stamp-camera');
-
-/// Timeline offsets, derived from the reference component's own control panel:
-/// camera tilt 0.80s, press 0.15s, lift away 0.42s, camera rise 0.70s.
-class _T {
-  static const tilt = 800;
-  static const press = 150;
-  static const lift = 420;
-  static const rise = 700;
-
-  static const pressAt = tilt;
-  static const liftAt = pressAt + press;
-  static const riseAt = liftAt + lift;
-  static const total = riseAt + rise;
-
-  static Interval span(int start, int len, [Curve c = Curves.linear]) =>
-      Interval(start / total, (start + len) / total, curve: c);
-}
 
 class StampPage extends StatefulWidget {
   const StampPage({super.key, this.sound});
@@ -50,7 +32,7 @@ class _StampPageState extends State<StampPage>
   late final AnimationController _c =
       AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: _T.total),
+        duration: const Duration(milliseconds: Timeline.total),
       )..addStatusListener((s) {
         if (s == AnimationStatus.completed) setState(() {});
       });
@@ -67,32 +49,32 @@ class _StampPageState extends State<StampPage>
   bool _thudded = false;
 
   Animation<double> _phase(int start, int len, Curve curve) =>
-      CurvedAnimation(parent: _c, curve: _T.span(start, len, curve));
+      CurvedAnimation(parent: _c, curve: Timeline.span(start, len, curve));
 
   late final Animation<double> _tilt = _phase(
     0,
-    _T.tilt,
+    Timeline.tilt,
     Curves.easeInOutCubic,
   );
   late final Animation<double> _press = _phase(
-    _T.pressAt,
-    _T.press,
+    Timeline.pressAt,
+    Timeline.press,
     Curves.easeIn,
   );
   late final Animation<double> _lift = _phase(
-    _T.liftAt,
-    _T.lift,
+    Timeline.liftAt,
+    Timeline.lift,
     Curves.easeOutCubic,
   );
   late final Animation<double> _rise = _phase(
-    _T.riseAt,
-    _T.rise,
+    Timeline.riseAt,
+    Timeline.rise,
     Curves.easeInOutCubic,
   );
 
   /// Ink bleeds in over the first slice of the lift, just after contact.
   late final Animation<double> _bleed = _phase(
-    _T.liftAt,
+    Timeline.liftAt,
     190,
     Curves.easeOutCubic,
   );
@@ -146,11 +128,11 @@ class _StampPageState extends State<StampPage>
     // beat later, as the stamp is lifting away.
     _c.addListener(() {
       if (_c.status != AnimationStatus.forward) return;
-      if (!_thudded && _c.value >= _T.liftAt / _T.total) {
+      if (!_thudded && _c.value >= Timeline.liftAt / Timeline.total) {
         _thudded = true;
         _sound.thud(_stamps);
       }
-      if (!_dinged && _c.value >= (_T.liftAt + 150) / _T.total) {
+      if (!_dinged && _c.value >= (Timeline.liftAt + 150) / Timeline.total) {
         _dinged = true;
         _sound.ding(_stamps);
       }
@@ -303,7 +285,7 @@ class _StampPageState extends State<StampPage>
         clipBehavior: Clip.none,
         children: [
           if (t > 0.01)
-            _Unclamped(
+            Unclamped(
               child: Opacity(
                 opacity: Curves.easeOut.transform(t.clamp(0.0, 1.0)),
                 child: Transform(
@@ -328,7 +310,7 @@ class _StampPageState extends State<StampPage>
           // rejects pointers beyond its own unscaled bounds before a scale
           // below it could map them back, which left the outer wheel columns
           // unreachable once the resting card was scaled up.
-          _Unclamped(
+          Unclamped(
             child: Transform.translate(
               offset: exitOffset,
               child: Transform.scale(
@@ -341,9 +323,9 @@ class _StampPageState extends State<StampPage>
                     position: position,
                     lift: lift,
                     rest: 1 - t,
-                    width: 208,
-                    depth: 128,
-                    height: 145,
+                    width: Box.width,
+                    depth: Box.depth,
+                    height: Box.height,
                     face: StampFace(
                       date: _date,
                       headText: _headLabel,
@@ -412,7 +394,7 @@ class _StampPageState extends State<StampPage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (final l in StampLabel.values)
-                    _Chip(
+                    LabelChip(
                       text: l.chip,
                       selected: l == _label,
                       onTap: _tap(() => setState(() => _label = l)),
@@ -425,7 +407,7 @@ class _StampPageState extends State<StampPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (final c in Tone.swatches) ...[
-                  _Swatch(
+                  InkSwatch(
                     color: c,
                     selected: c == _color,
                     onTap: _tap(() => setState(() => _color = c)),
@@ -497,9 +479,9 @@ class _StampPageState extends State<StampPage>
             ),
           ),
           const SizedBox(width: 12),
-          _Pill(text: 'Undo', onTap: _undo),
+          PillButton(text: 'Undo', onTap: _undo),
           const SizedBox(width: 6),
-          _Pill(
+          PillButton(
             text: 'Done',
             filled: true,
             onTap: _tap(() => setState(() => _confirmed = true)),
@@ -513,141 +495,10 @@ class _StampPageState extends State<StampPage>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Pill(text: 'Download PDF', onTap: _tap(() {})),
+        PillButton(text: 'Download PDF', onTap: _tap(() {})),
         const SizedBox(width: 8),
-        _Pill(text: 'Next invoice', filled: true, onTap: _undo),
+        PillButton(text: 'Next invoice', filled: true, onTap: _undo),
       ],
     );
   }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.text,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String text;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 5,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Helvetica Neue',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: selected ? Tone.text : Tone.muted,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? color : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Center(
-          child: Container(
-            width: 23,
-            height: 23,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.onTap, this.filled = false});
-
-  final String text;
-  final VoidCallback onTap;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: filled ? Tone.text : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Tone.cardEdge),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Helvetica Neue',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: filled ? Colors.white : Tone.text,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Hands its child unbounded constraints so it keeps its natural size inside a
-/// smaller animated frame.
-class _Unclamped extends StatelessWidget {
-  const _Unclamped({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => OverflowBox(
-    minWidth: 0,
-    minHeight: 0,
-    maxWidth: double.infinity,
-    maxHeight: double.infinity,
-    child: child,
-  );
 }
