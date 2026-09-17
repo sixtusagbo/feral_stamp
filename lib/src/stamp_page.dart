@@ -161,7 +161,7 @@ class _StampPageState extends State<StampPage>
     if (park != null) {
       _c.value = park.clamp(0.0, 1.0);
       // Past the parking point only Done can take it, so the state matches.
-      _confirmed = _c.value > _parked + 1e-6;
+      _confirmed = _c.value > _parked + 0.01;
     }
   }
 
