@@ -313,7 +313,7 @@ class _StampPageState extends State<StampPage>
 
     // The toast straddles the page's bottom edge. The frame grows by the
     // overlap while the page is tilted and gives it back as the camera rises.
-    final hang = 30.0 * (t - _rise.value).clamp(0.0, 1.0);
+    final hang = 72.0 * (t - _rise.value).clamp(0.0, 1.0);
 
     return SizedBox(
       height: lerpDouble(268, 356, t)! + _rise.value * 125 + hang,
