@@ -324,13 +324,17 @@ class _StampPageState extends State<StampPage>
                 ),
               ),
             ),
+          // Opacity sits inside the transforms, not outside them: a proxy box
+          // rejects pointers beyond its own unscaled bounds before a scale
+          // below it could map them back, which left the outer wheel columns
+          // unreachable once the resting card was scaled up.
           _Unclamped(
-            child: Opacity(
-              opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
-              child: Transform.translate(
-                offset: exitOffset,
-                child: Transform.scale(
-                  scale: exitScale,
+            child: Transform.translate(
+              offset: exitOffset,
+              child: Transform.scale(
+                scale: exitScale,
+                child: Opacity(
+                  opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
                   child: StampCube(
                     angle: angle,
                     perspective: perspective,
