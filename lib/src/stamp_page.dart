@@ -254,8 +254,10 @@ class _StampPageState extends State<StampPage>
                     ),
                     if (_confirmed) ...[
                       const Text(' · ', style: Type.body),
+                      // On the finished page this is a way out, not a rewind:
+                      // it behaves like Next invoice.
                       GestureDetector(
-                        onTap: _undo,
+                        onTap: _next,
                         child: Text(
                           'Undo',
                           style: Type.body.copyWith(
