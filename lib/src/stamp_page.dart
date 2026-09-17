@@ -141,15 +141,16 @@ class _StampPageState extends State<StampPage>
     HardwareKeyboard.instance.addHandler(_onKey);
 
     // The thud fires when the rubber meets the paper, which is the end of the
-    // press phase, not the moment the button was pressed. The ding follows a
-    // beat later, as the stamp is lifting away.
+    // press phase, not the moment the button was pressed. The ding follows
+    // once the thud has finished (it runs 170ms) plus a short beat, as the
+    // stamp is lifting away; the two never overlap.
     _c.addListener(() {
       if (_c.status != AnimationStatus.forward) return;
       if (!_thudded && _c.value >= Timeline.liftAt / Timeline.total) {
         _thudded = true;
         _sound.thud(_stamps);
       }
-      if (!_dinged && _c.value >= (Timeline.liftAt + 150) / Timeline.total) {
+      if (!_dinged && _c.value >= (Timeline.liftAt + 260) / Timeline.total) {
         _dinged = true;
         _sound.ding(_stamps);
       }
