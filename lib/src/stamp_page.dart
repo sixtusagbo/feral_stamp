@@ -113,18 +113,25 @@ class _StampPageState extends State<StampPage>
     _c.animateTo(_parked);
   }
 
-  /// Back to the picker. Undo ticks; Next invoice does not.
-  void _reset() {
+  void _clear() {
     setState(() {
       _voided = false;
       _confirmed = false;
     });
+  }
+
+  /// Runs the press backwards to the picker.
+  void _undo() {
+    _sound.tick();
+    _clear();
     _c.reverse();
   }
 
-  void _undo() {
-    _sound.tick();
-    _reset();
+  /// Straight to a fresh picker. No animation: the press is not being
+  /// undone, this is the next job.
+  void _next() {
+    _clear();
+    _c.value = 0;
   }
 
   void _done() {
@@ -563,7 +570,7 @@ class _StampPageState extends State<StampPage>
           text: 'Next invoice',
           filled: true,
           large: true,
-          onTap: _reset,
+          onTap: _next,
         ),
       ],
     );
