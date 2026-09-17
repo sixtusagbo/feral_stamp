@@ -81,6 +81,9 @@ class _StampPageState extends State<StampPage>
     Curves.easeOutCubic,
   );
 
+  /// The width everything is designed at. Narrower viewports scale it down.
+  static const _stageWidth = 660.0;
+
   /// Where the press parks: the end of the lift, with the page still tilted
   /// under the toast. The camera rise beyond it belongs to Done.
   static const _parked = Timeline.riseAt / Timeline.total;
@@ -196,17 +199,26 @@ class _StampPageState extends State<StampPage>
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: AnimatedBuilder(
-              animation: _c,
-              builder: (context, _) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _header(),
-                  const SizedBox(height: 60),
-                  _scene(),
-                  SizedBox(height: _confirmed ? 26 : 38),
-                  _controls(),
-                ],
+            // The composition is laid out at desktop width and scaled down as
+            // a whole on anything narrower, so a phone gets the same picture
+            // smaller rather than a re-flowed one.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(
+                width: _stageWidth,
+                child: AnimatedBuilder(
+                  animation: _c,
+                  builder: (context, _) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _header(),
+                      const SizedBox(height: 60),
+                      _scene(),
+                      SizedBox(height: _confirmed ? 26 : 38),
+                      _controls(),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
