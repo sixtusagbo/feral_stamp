@@ -62,10 +62,14 @@ class _StampPageState extends State<StampPage>
     Timeline.press,
     Curves.easeIn,
   );
+
+  /// Raw progress: the lift drives the spring, the exit and the fade, and
+  /// each wants its own shaping in the scene. Curving it here as well
+  /// double-eases the exit and the box is gone a third of the way in.
   late final Animation<double> _lift = _phase(
     Timeline.liftAt,
     Timeline.lift,
-    Curves.easeOutCubic,
+    Curves.linear,
   );
   late final Animation<double> _rise = _phase(
     Timeline.riseAt,
