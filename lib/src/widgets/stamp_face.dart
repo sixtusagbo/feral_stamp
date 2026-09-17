@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../invoice.dart';
 import '../theme.dart';
@@ -44,7 +45,7 @@ class StampFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 9, 10, 7),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -52,7 +53,12 @@ class StampFace extends StatelessWidget {
             children: [
               Text(
                 headText,
-                style: Type.eyebrow.copyWith(fontSize: 7.5, letterSpacing: 1.6),
+                style: GoogleFonts.inter(
+                  textStyle: Type.eyebrow.copyWith(
+                    fontSize: 7.5,
+                    letterSpacing: 1.6,
+                  ),
+                ),
               ),
               const Spacer(),
               Container(
@@ -62,7 +68,7 @@ class StampFace extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

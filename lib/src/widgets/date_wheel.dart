@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme.dart';
 
@@ -87,7 +88,13 @@ class _DateWheelState extends State<DateWheel> {
         Widget row = Center(
           child: Text(
             widget.values[i],
-            style: Type.wheel.copyWith(fontSize: widget.fontSize),
+            style: GoogleFonts.inter(
+              textStyle: Type.wheel.copyWith(
+                fontSize: widget.fontSize,
+                letterSpacing: -0.01 * widget.fontSize,
+              ),
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         );
         if (k > 0.02) {
@@ -166,7 +173,9 @@ class _DateWheelState extends State<DateWheel> {
         const SizedBox(height: 2),
         Text(
           widget.axisLabel,
-          style: Type.axis.copyWith(fontSize: 6.5, letterSpacing: 1.1),
+          style: GoogleFonts.inter(
+            textStyle: Type.axis.copyWith(fontSize: 6.5, letterSpacing: 1.1),
+          ),
         ),
       ],
     );

@@ -37,9 +37,9 @@ class Tone {
 class Box {
   const Box._();
 
-  static const width = 208.0;
+  static const width = 216.0;
   static const depth = 128.0;
-  static const height = 145.0;
+  static const height = 138.0;
 }
 
 /// Durations exposed by the reference component's own control panel.
@@ -87,7 +87,7 @@ class Type {
   static const wheel = TextStyle(
     fontFamily: _family,
     fontSize: 21,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0.4,
     color: Tone.text,
     height: 1.0,
