@@ -22,6 +22,9 @@ class InvoiceSheet extends StatelessWidget {
 
   static const width = 380.0;
 
+  /// Wraps the printed mark so it can be rasterised for the PDF.
+  static final stampKey = GlobalKey();
+
   /// Nominal height. The paper grows if a larger text scale needs the room,
   /// so the layout never hard-fails on an unexpected font.
   static const height = 408.0;
@@ -150,11 +153,18 @@ class InvoiceSheet extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: StampMark(
-                    label: headText,
-                    date: date.stampLine,
-                    color: color,
-                    bleed: bleed,
+                  // Padded so the rotated mark is not clipped when captured.
+                  child: RepaintBoundary(
+                    key: stampKey,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: StampMark(
+                        label: headText,
+                        date: date.stampLine,
+                        color: color,
+                        bleed: bleed,
+                      ),
+                    ),
                   ),
                 ),
               ),

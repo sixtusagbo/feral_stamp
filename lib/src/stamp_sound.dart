@@ -16,7 +16,8 @@ enum SoundMode { every, first, never }
 /// - **thud**: the "kpum" as the rubber meets the paper, at the end of the
 ///   press phase rather than when the button was hit, so it lands with the
 ///   ink.
-/// - **ding**: a small bell as the stamp lifts away, the moment it is done.
+/// - **ding**: three rising notes as the stamp lifts away, the moment it is
+///   done.
 ///
 /// Each has its own player so they can overlap: the ding starts while the
 /// thud's tail is still ringing.

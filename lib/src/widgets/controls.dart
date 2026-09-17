@@ -94,20 +94,26 @@ class PillButton extends StatelessWidget {
     required this.text,
     required this.onTap,
     this.filled = false,
+    this.large = false,
   });
 
   final String text;
   final VoidCallback onTap;
   final bool filled;
 
+  /// The finished state's actions are the size of the main button.
+  final bool large;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: large
+            ? const EdgeInsets.symmetric(horizontal: 34, vertical: 15)
+            : const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color: filled ? Tone.text : Colors.white,
+          color: filled ? Tone.text : (large ? Tone.chipTray : Colors.white),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: Tone.cardEdge),
         ),
@@ -115,8 +121,8 @@ class PillButton extends StatelessWidget {
           text,
           style: TextStyle(
             fontFamily: 'Helvetica Neue',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
+            fontSize: large ? 15 : 14,
+            fontWeight: FontWeight.w600,
             color: filled ? Colors.white : Tone.text,
           ),
         ),

@@ -1,9 +1,11 @@
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show ImageByteFormat, lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'invoice.dart';
+import 'invoice_pdf.dart';
 import 'stamp_sound.dart';
 import 'theme.dart';
 import 'timeline.dart';
@@ -79,9 +81,19 @@ class _StampPageState extends State<StampPage>
     Curves.easeOutCubic,
   );
 
+  /// Where the press parks: the end of the lift, with the page still tilted
+  /// under the toast. The camera rise beyond it belongs to Done.
+  static const _parked = Timeline.riseAt / Timeline.total;
+
+  /// The stamp is on the page and the toast is up.
+  bool get _landed => _c.value >= _parked - 1e-6;
+
+  /// The camera has risen: the flat, finished page.
+  bool get _finished => _c.value >= 1 - 1e-6;
+
   Stage get _stage {
     if (_c.isDismissed) return Stage.picking;
-    if (_c.isCompleted) return Stage.stamped;
+    if (_landed) return Stage.stamped;
     return Stage.pressing;
   }
 
@@ -98,22 +110,27 @@ class _StampPageState extends State<StampPage>
       _thudded = false;
       _dinged = false;
     });
-    _c.forward();
+    _c.animateTo(_parked);
   }
 
-  /// Wraps a control's handler so it ticks first.
-  VoidCallback _tap(VoidCallback handler) => () {
-    _sound.tick();
-    handler();
-  };
-
-  void _undo() {
-    _sound.tick();
+  /// Back to the picker. Undo ticks; Next invoice does not.
+  void _reset() {
     setState(() {
       _voided = false;
       _confirmed = false;
     });
     _c.reverse();
+  }
+
+  void _undo() {
+    _sound.tick();
+    _reset();
+  }
+
+  void _done() {
+    _sound.tick();
+    setState(() => _confirmed = true);
+    _c.animateTo(1);
   }
 
   @override
@@ -175,7 +192,7 @@ class _StampPageState extends State<StampPage>
                   _header(),
                   const SizedBox(height: 60),
                   _scene(),
-                  const SizedBox(height: 38),
+                  SizedBox(height: _confirmed ? 26 : 38),
                   _controls(),
                 ],
               ),
@@ -189,7 +206,7 @@ class _StampPageState extends State<StampPage>
   // ---------------------------------------------------------------- header
 
   Widget _header() {
-    final done = _c.isCompleted;
+    final done = _landed;
     return Column(
       children: [
         Text(
@@ -223,6 +240,19 @@ class _StampPageState extends State<StampPage>
                         textAlign: TextAlign.center,
                       ),
                     ),
+                    if (_confirmed) ...[
+                      const Text(' · ', style: Type.body),
+                      GestureDetector(
+                        onTap: _undo,
+                        child: Text(
+                          'Undo',
+                          style: Type.body.copyWith(
+                            color: const Color(0xFF2F6BFF),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 )
               : const Text(
@@ -277,71 +307,88 @@ class _StampPageState extends State<StampPage>
     // pulls back as the page comes into view. Measured off the reference.
     final exitScale = (1 + 0.16 * exit) * lerpDouble(2.0, 1.0, t)!;
 
+    // The toast straddles the page's bottom edge. The frame grows by the
+    // overlap while the page is tilted and gives it back as the camera rises.
+    final hang = 30.0 * (t - _rise.value).clamp(0.0, 1.0);
+
     return SizedBox(
-      height: lerpDouble(268, 700, t)!,
+      height: lerpDouble(268, 580, t)! - _rise.value * 88 + hang,
       width: 620,
       child: Stack(
-        alignment: Alignment.center,
+        alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          if (t > 0.01)
-            Unclamped(
-              child: Opacity(
-                opacity: Curves.easeOut.transform(t.clamp(0.0, 1.0)),
-                child: Transform(
-                  key: cameraKey,
-                  alignment: Alignment.center,
-                  transform: camera3d,
-                  // The sheet is designed at a readable width and scaled up so
-                  // the page reads large against the head, as in the reference.
-                  child: Transform.scale(
-                    scale: 1.18,
-                    child: InvoiceSheet(
-                      headText: _headLabel,
-                      date: _date,
-                      color: _inkColor,
-                      bleed: _bleed.value,
+          Positioned.fill(
+            bottom: hang,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                if (t > 0.01)
+                  Unclamped(
+                    child: Opacity(
+                      opacity: Curves.easeOut.transform(t.clamp(0.0, 1.0)),
+                      child: Transform(
+                        key: cameraKey,
+                        alignment: Alignment.center,
+                        transform: camera3d,
+                        // The sheet is designed at a readable width and scaled up so
+                        // the page reads large against the head, as in the reference.
+                        child: Transform.scale(
+                          scale: 1.18,
+                          child: InvoiceSheet(
+                            headText: _headLabel,
+                            date: _date,
+                            color: _inkColor,
+                            bleed: _bleed.value,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Opacity sits inside the transforms, not outside them: a proxy box
+                // rejects pointers beyond its own unscaled bounds before a scale
+                // below it could map them back, which left the outer wheel columns
+                // unreachable once the resting card was scaled up.
+                Unclamped(
+                  child: Transform.translate(
+                    offset: exitOffset,
+                    child: Transform.scale(
+                      scale: exitScale,
+                      child: Opacity(
+                        opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(
+                          0.0,
+                          1.0,
+                        ),
+                        child: StampCube(
+                          angle: angle,
+                          perspective: perspective,
+                          position: position,
+                          lift: lift,
+                          rest: 1 - t,
+                          width: Box.width,
+                          depth: Box.depth,
+                          height: Box.height,
+                          face: StampFace(
+                            date: _date,
+                            headText: _headLabel,
+                            color: _color,
+                            background: StampCube.lidTone(1 - t),
+                            interactive: _stage == Stage.picking,
+                            onDateChanged: (d) {
+                              _sound.roll();
+                              setState(() => _date = d);
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          // Opacity sits inside the transforms, not outside them: a proxy box
-          // rejects pointers beyond its own unscaled bounds before a scale
-          // below it could map them back, which left the outer wheel columns
-          // unreachable once the resting card was scaled up.
-          Unclamped(
-            child: Transform.translate(
-              offset: exitOffset,
-              child: Transform.scale(
-                scale: exitScale,
-                child: Opacity(
-                  opacity: (1 - (_lift.value - 0.55) / 0.45).clamp(0.0, 1.0),
-                  child: StampCube(
-                    angle: angle,
-                    perspective: perspective,
-                    position: position,
-                    lift: lift,
-                    rest: 1 - t,
-                    width: Box.width,
-                    depth: Box.depth,
-                    height: Box.height,
-                    face: StampFace(
-                      date: _date,
-                      headText: _headLabel,
-                      color: _color,
-                      background: StampCube.lidTone(1 - t),
-                      interactive: _stage == Stage.picking,
-                      onDateChanged: (d) {
-                        _sound.roll();
-                        setState(() => _date = d);
-                      },
-                    ),
-                  ),
-                ),
-              ),
+              ],
             ),
           ),
+          if (_landed && !_confirmed) Positioned(bottom: 0, child: _toast()),
         ],
       ),
     );
@@ -354,8 +401,10 @@ class _StampPageState extends State<StampPage>
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       child: Center(
-        child: _c.isCompleted
-            ? (_confirmed ? _finalActions() : _toast())
+        child: _finished
+            ? _finalActions()
+            : _landed
+            ? const SizedBox.shrink()
             : Opacity(
                 opacity: (1 - _tilt.value * 1.6).clamp(0.0, 1.0),
                 child: _picker(),
@@ -397,7 +446,7 @@ class _StampPageState extends State<StampPage>
                     LabelChip(
                       text: l.chip,
                       selected: l == _label,
-                      onTap: _tap(() => setState(() => _label = l)),
+                      onTap: () => setState(() => _label = l),
                     ),
                 ],
               ),
@@ -410,7 +459,7 @@ class _StampPageState extends State<StampPage>
                   InkSwatch(
                     color: c,
                     selected: c == _color,
-                    onTap: _tap(() => setState(() => _color = c)),
+                    onTap: () => setState(() => _color = c),
                   ),
                   const SizedBox(width: 12),
                 ],
@@ -454,50 +503,63 @@ class _StampPageState extends State<StampPage>
 
   Widget _toast() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 7, 7, 7),
+      padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Tone.cardEdge),
-        boxShadow: paperShadow(0.6),
+        boxShadow: paperShadow(0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 7,
-            height: 7,
+            width: 9,
+            height: 9,
             decoration: BoxDecoration(color: _inkColor, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Text(
             '${_voided ? 'Voided' : _label.past} · ${_date.shortLine}',
             style: const TextStyle(
               fontFamily: 'Helvetica Neue',
-              fontSize: 12,
+              fontSize: 16,
               color: Tone.text,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           PillButton(text: 'Undo', onTap: _undo),
           const SizedBox(width: 6),
-          PillButton(
-            text: 'Done',
-            filled: true,
-            onTap: _tap(() => setState(() => _confirmed = true)),
-          ),
+          PillButton(text: 'Done', filled: true, onTap: _done),
         ],
       ),
     );
+  }
+
+  /// The PDF carries a picture of the stamp exactly as it printed on screen,
+  /// erosion and all, rather than a clean vector redraw of it.
+  Future<void> _download() async {
+    final boundary =
+        InvoiceSheet.stampKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
+    final image = await boundary?.toImage(pixelRatio: 4);
+    final png = (await image?.toByteData(format: ImageByteFormat.png))?.buffer
+        .asUint8List();
+    await downloadInvoicePdf(stampPng: png);
   }
 
   Widget _finalActions() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PillButton(text: 'Download PDF', onTap: _tap(() {})),
-        const SizedBox(width: 8),
-        PillButton(text: 'Next invoice', filled: true, onTap: _undo),
+        PillButton(text: 'Download PDF', large: true, onTap: _download),
+        const SizedBox(width: 14),
+        PillButton(
+          text: 'Next invoice',
+          filled: true,
+          large: true,
+          onTap: _reset,
+        ),
       ],
     );
   }

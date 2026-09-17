@@ -4,7 +4,7 @@
 
 PORT ?= 8731
 
-.PHONY: dev build serve run test frames analyze clean
+.PHONY: dev build serve run test frames sounds analyze clean
 
 ## Rebuild the web bundle and serve it (Ctrl-C to stop).
 dev: build serve
@@ -28,6 +28,10 @@ test:
 ## Render the press at ten points on the timeline into test/goldens/.
 frames:
 	flutter test --update-goldens test/press_frames_test.dart
+
+## Regenerate the four bundled cues from tool/sounds.py.
+sounds:
+	python3 tool/sounds.py
 
 analyze:
 	flutter analyze
