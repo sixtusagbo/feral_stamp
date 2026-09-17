@@ -9,6 +9,7 @@ import 'invoice_pdf.dart';
 import 'stamp_sound.dart';
 import 'theme.dart';
 import 'timeline.dart';
+import 'widgets/credits.dart';
 import 'widgets/final_actions.dart';
 import 'widgets/invoice_sheet.dart';
 import 'widgets/picker_controls.dart';
@@ -277,6 +278,8 @@ class _StampPageState extends State<StampPage>
                     ),
             ),
           ),
+          const SizedBox(height: 56),
+          const Credits(),
         ],
       ),
     );
