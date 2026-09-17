@@ -39,7 +39,7 @@ class Box {
 
   static const width = 208.0;
   static const depth = 128.0;
-  static const height = 40.0;
+  static const height = 145.0;
 }
 
 /// Durations exposed by the reference component's own control panel.

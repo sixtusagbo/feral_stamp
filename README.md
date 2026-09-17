@@ -66,9 +66,17 @@ unseeded one makes the stamp crawl while the ink fades in.
 
 ```bash
 flutter pub get
-flutter run            # or: flutter run -d chrome
-flutter test --exclude-tags goldens
+make dev               # build the web bundle and serve it on :8731
+make run               # or: hot-reloading run in Chrome (r to reload)
+make test
 ```
+
+`make dev` serves `build/web` through `tool/serve.py`, which sends no-cache headers. A plain
+`python -m http.server` doesn't, and Chrome will keep an old `main.dart.js` for a while after a
+rebuild, which is a confusing way to lose an afternoon.
+
+The stamp's dimensions live in `lib/src/theme.dart` as `Box.width`, `Box.depth` and `Box.height`.
+Change a value, `make dev`, reload.
 
 ### Looking at the animation
 
