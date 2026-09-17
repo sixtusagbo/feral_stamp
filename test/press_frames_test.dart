@@ -12,7 +12,7 @@ import 'package:feral_stamp/src/stamp_sound.dart';
 ///
 ///     flutter test --update-goldens test/press_frames_test.dart
 void main() {
-  const marks = <int>[0, 250, 500, 800, 900, 950, 1150, 1400, 1750, 2100];
+  const marks = <int>[0, 400, 800, 950, 1100, 1250, 1300, 1450, 1720, 2420];
 
   testWidgets('press timeline', tags: 'goldens', (tester) async {
     // The test binding flattens every blur into a solid shape for

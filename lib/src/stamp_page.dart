@@ -73,9 +73,9 @@ class _StampPageState extends State<StampPage>
     Curves.easeInOutCubic,
   );
 
-  /// Ink bleeds in over the first slice of the lift, just after contact.
+  /// Ink bleeds in from the moment of contact, under the resting stamp.
   late final Animation<double> _bleed = _phase(
-    Timeline.liftAt,
+    Timeline.contactAt,
     190,
     Curves.easeOutCubic,
   );
@@ -167,11 +167,11 @@ class _StampPageState extends State<StampPage>
     // stamp is lifting away; the two never overlap.
     _c.addListener(() {
       if (_c.status != AnimationStatus.forward) return;
-      if (!_thudded && _c.value >= Timeline.liftAt / Timeline.total) {
+      if (!_thudded && _c.value >= Timeline.contactAt / Timeline.total) {
         _thudded = true;
         _sound.thud(_stamps);
       }
-      if (!_dinged && _c.value >= (Timeline.liftAt + 260) / Timeline.total) {
+      if (!_dinged && _c.value >= (Timeline.contactAt + 260) / Timeline.total) {
         _dinged = true;
         _sound.ding(_stamps);
       }

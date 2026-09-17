@@ -80,8 +80,10 @@ class StampScene extends StatelessWidget {
     // The box is a real object on the page: it hovers above the mark along
     // the page's normal and descends onto it. Leaving is a screen-space rise
     // applied outside the camera, which is what the reference does.
+    // The hover is high: about a third of the page's height in the reference,
+    // so the 0.15s drop covers real distance and lands as a slam.
     const markOnPage = Offset(74, 126);
-    const hoverLift = 65.0;
+    const hoverLift = 150.0;
     final position = Offset.lerp(Offset.zero, markOnPage, t)!;
     final boxLift = hoverLift * t * settle;
 
@@ -143,7 +145,9 @@ class StampScene extends StatelessWidget {
                         opacity: (1 - (lift - 0.55) / 0.45).clamp(0.0, 1.0),
                         child: StampCube(
                           angle: angle,
-                          perspective: perspective,
+                          // Weaker than the page's, or the hover swells the
+                          // box by a fifth; the reference barely changes size.
+                          perspective: perspective * 0.5,
                           position: position,
                           lift: boxLift,
                           rest: 1 - t,
