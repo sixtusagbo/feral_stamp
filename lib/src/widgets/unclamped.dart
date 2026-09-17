@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Hands its child unbounded constraints so it keeps its natural size inside a
 /// smaller animated frame.
 class Unclamped extends StatelessWidget {
-  const Unclamped({required this.child});
+  const Unclamped({super.key, required this.child});
 
   final Widget child;
 

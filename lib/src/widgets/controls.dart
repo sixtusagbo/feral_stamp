@@ -6,6 +6,7 @@ import '../theme.dart';
 /// swatch, and the pill buttons on the toast and the finished state.
 class LabelChip extends StatelessWidget {
   const LabelChip({
+    super.key,
     required this.text,
     required this.selected,
     required this.onTap,
@@ -51,6 +52,7 @@ class LabelChip extends StatelessWidget {
 
 class InkSwatch extends StatelessWidget {
   const InkSwatch({
+    super.key,
     required this.color,
     required this.selected,
     required this.onTap,
@@ -88,6 +90,7 @@ class InkSwatch extends StatelessWidget {
 
 class PillButton extends StatelessWidget {
   const PillButton({
+    super.key,
     required this.text,
     required this.onTap,
     this.filled = false,

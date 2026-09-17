@@ -18,7 +18,7 @@ class Tone {
   static const hairline = Color(0xFFE6E6E9);
 
   /// The grey slab behind the selected row of each wheel.
-  static const wheelPill = Color(0xFFE5E5E9);
+  static const wheelPill = Color(0xFFEAEAED);
 
   /// The tray the label chips sit in.
   static const chipTray = Color(0xFFECECEF);
@@ -39,7 +39,7 @@ class Box {
 
   static const width = 208.0;
   static const depth = 128.0;
-  static const height = 145.0;
+  static const height = 40.0;
 }
 
 /// Durations exposed by the reference component's own control panel.
@@ -87,7 +87,7 @@ class Type {
   static const wheel = TextStyle(
     fontFamily: _family,
     fontSize: 21,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
     color: Tone.text,
     height: 1.0,

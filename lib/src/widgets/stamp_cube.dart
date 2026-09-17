@@ -65,7 +65,7 @@ class StampCube extends StatelessWidget {
   /// The lid's mid tone at a given [rest], for anything that has to blend
   /// into it.
   static Color lidTone(double rest) =>
-      Color.lerp(const Color(0xFFF1F1F4), const Color(0xFFFAFAFB), rest)!;
+      Color.lerp(const Color(0xFFF1F1F4), const Color(0xFFFBFBFC), rest)!;
 
   Matrix4 _camera() => Matrix4.identity()
     ..setEntry(3, 2, perspective)
@@ -120,7 +120,7 @@ class StampCube extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.lerp(const Color(0xFFEAEAEE), const Color(0xFFF4F4F6), rest)!,
+            Color.lerp(const Color(0xFFEAEAEE), const Color(0xFFF9F9FA), rest)!,
             lidTone(rest),
             Color.lerp(const Color(0xFFF5F5F7), const Color(0xFFFDFDFD), rest)!,
           ],
