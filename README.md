@@ -7,6 +7,12 @@ and prints the date on the page.
 The original is a web component by FeralUI Studio, designed and animated in Figma before any code.
 This is a from-scratch Flutter rebuild of that interaction. All credit for the design is theirs.
 
+**The original design:** [the post on X](https://x.com/SolutionB2u/status/2099695046178083303) by
+[@SolutionB2u](https://x.com/SolutionB2u), made in Figma motion, and the
+[live component on feralui.dev](https://feralui.dev/stamp).
+
+**This rebuild, live:** [sixtusagbo.github.io/feral_stamp](https://sixtusagbo.github.io/feral_stamp/)
+
 ## The interaction
 
 1. **Pick.** Three wheels (day, month, year) on the face of the stamp. A label chip picks what the
