@@ -158,7 +158,11 @@ class _StampPageState extends State<StampPage>
     // Debug affordance: ?t=0.46 parks the timeline at that point so a frame
     // can be inspected in a real browser without driving the press.
     final park = double.tryParse(Uri.base.queryParameters['t'] ?? '');
-    if (park != null) _c.value = park.clamp(0.0, 1.0);
+    if (park != null) {
+      _c.value = park.clamp(0.0, 1.0);
+      // Past the parking point only Done can take it, so the state matches.
+      _confirmed = _c.value > _parked + 1e-6;
+    }
   }
 
   bool _onKey(KeyEvent e) {
@@ -312,7 +316,7 @@ class _StampPageState extends State<StampPage>
     final hang = 30.0 * (t - _rise.value).clamp(0.0, 1.0);
 
     return SizedBox(
-      height: lerpDouble(268, 580, t)! - _rise.value * 88 + hang,
+      height: lerpDouble(268, 356, t)! + _rise.value * 125 + hang,
       width: 620,
       child: Stack(
         alignment: Alignment.bottomCenter,
