@@ -52,7 +52,7 @@ class Type {
 
   static const title = TextStyle(
     fontFamily: _family,
-    fontSize: 26,
+    fontSize: 34,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.6,
     color: Tone.text,
@@ -61,15 +61,15 @@ class Type {
 
   static const eyebrow = TextStyle(
     fontFamily: _family,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w600,
-    letterSpacing: 2.2,
+    letterSpacing: 2.4,
     color: Tone.muted,
   );
 
   static const body = TextStyle(
     fontFamily: _family,
-    fontSize: 13,
+    fontSize: 16,
     color: Tone.muted,
     height: 1.45,
   );
@@ -80,6 +80,7 @@ class Type {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.4,
     color: Tone.text,
+    height: 1.0,
   );
 
   static const axis = TextStyle(

@@ -191,9 +191,9 @@ class _StampPageState extends State<StampPage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _header(),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 60),
                   _scene(),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 38),
                   _controls(),
                 ],
               ),
@@ -218,7 +218,7 @@ class _StampPageState extends State<StampPage>
         const Text('Invoice ${Invoice.id}', style: Type.title),
         const SizedBox(height: 6),
         SizedBox(
-          width: 330,
+          width: 560,
           child: done
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -390,10 +390,10 @@ class _StampPageState extends State<StampPage>
           style: Type.body.copyWith(
             color: Tone.text,
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 18,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24),
         // Wraps so the tray and the swatches stack on a narrow screen instead
         // of running off the edge.
         Wrap(
@@ -420,6 +420,7 @@ class _StampPageState extends State<StampPage>
                 ],
               ),
             ),
+            Container(width: 1, height: 30, color: Tone.cardEdge),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -429,18 +430,18 @@ class _StampPageState extends State<StampPage>
                     selected: c == _color,
                     onTap: _tap(() => setState(() => _color = c)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                 ],
               ],
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 22),
         GestureDetector(
           onTap: _stamp,
           onLongPress: () => _stamp(voided: true),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 15),
             decoration: BoxDecoration(
               color: Tone.text,
               borderRadius: BorderRadius.circular(999),
@@ -449,19 +450,19 @@ class _StampPageState extends State<StampPage>
               _label.action,
               style: const TextStyle(
                 fontFamily: 'Helvetica Neue',
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         const Text(
           'or press Enter · hold to void',
           style: TextStyle(
             fontFamily: 'Helvetica Neue',
-            fontSize: 10,
+            fontSize: 12,
             color: Tone.muted,
           ),
         ),
@@ -537,7 +538,7 @@ class _Chip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
@@ -555,7 +556,7 @@ class _Chip extends StatelessWidget {
           text,
           style: TextStyle(
             fontFamily: 'Helvetica Neue',
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: selected ? Tone.text : Tone.muted,
           ),
@@ -581,8 +582,8 @@ class _Swatch extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 26,
-        height: 26,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
@@ -592,8 +593,8 @@ class _Swatch extends StatelessWidget {
         ),
         child: Center(
           child: Container(
-            width: 18,
-            height: 18,
+            width: 23,
+            height: 23,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
         ),
