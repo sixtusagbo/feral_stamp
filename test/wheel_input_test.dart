@@ -6,9 +6,9 @@ import 'package:feral_stamp/main.dart';
 import 'package:feral_stamp/src/stamp_sound.dart';
 
 /// The wheels are the whole point of the component, and on web and desktop the
-/// only way anyone reaches them is with a cursor. Flutter excludes mouse and
-/// trackpad from `dragDevices` by default, which leaves them inert, so both
-/// input kinds are pinned here.
+/// only way anyone reaches them is with a cursor. Flutter leaves the mouse out
+/// of `dragDevices` by default, which leaves it inert, so mouse drags are
+/// pinned here alongside touch and trackpad.
 void main() {
   for (final kind in const [
     PointerDeviceKind.touch,

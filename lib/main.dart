@@ -29,9 +29,9 @@ class FeralStampApp extends StatelessWidget {
         scaffoldBackgroundColor: Tone.page,
         colorScheme: ColorScheme.fromSeed(seedColor: Tone.stamp),
       ),
-      // Flutter leaves mouse and trackpad out of dragDevices by default, so
-      // on web and desktop a cursor cannot roll the wheels at all. This is a
-      // component you drag, so they have to be in.
+      // Flutter leaves the mouse out of dragDevices by default (touch, stylus
+      // and trackpad are in), so on web and desktop a mouse cannot drag the
+      // wheels at all. This is a component you drag, so it has to be in.
       scrollBehavior: const _DragWithAnything(),
       home: StampPage(sound: sound),
     );
